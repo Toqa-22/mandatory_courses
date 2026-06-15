@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mandatory Course</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fc;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 50px;
+            color: #0f172a;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 40px;
+        }
+
+        .top-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .course-card,
+        .date-card {
+            width: 220px;
+            background: white;
+            border-radius: 25px;
+            padding: 35px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+            transition: .3s;
+        }
+
+        .course-card:hover,
+        .date-card:hover {
+            transform: translateY(-8px);
+        }
+
+        .course-name {
+            font-size: 30px;
+            color: #2563eb;
+            margin-bottom: 20px;
+        }
+
+        .seat-number {
+            font-size: 55px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .seat-text {
+            color: #64748b;
+            font-size: 18px;
+        }
+
+        .date-card h2 {
+            color: #3b2602;
+            margin-bottom: 20px;
+        }
+
+        .date-card p {
+            font-size: 22px;
+            color: #0f172a;
+        }
+
+        .form-card {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+        }
+
+        .form-card h2 {
+            margin-bottom: 30px;
+            color: #0f172a;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 15px;
+            font-size: 16px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 30px;
+            padding: 18px;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            border: none;
+            color: white;
+            font-size: 18px;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: .9;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1 class="title">Mandatory Course</h1>
+        <p class="subtitle">
+            Please fill the form below to register.
+        </p>
+
+        <div class="top-cards">
+
+            <div id="courseCards"></div>
+
+            <div class="date-card">
+                <h2>Date</h2>
+                <p id="todayDate"></p>
+            </div>
+
+        </div>
+
+        <div class="form-card">
+
+            <h2>Registration Form</h2>
+
+            <form id="registrationForm">
+
+                <div class="form-grid">
+
+                    <input type="text" id="studentName" placeholder="Your Name" required>
+
+                    <input type="text" id="staffName" placeholder="Staff Name" required>
+
+                    <input type="text" id="staffNumber" placeholder="Staff Number" required>
+
+                    <input type="text" id="institution" placeholder="Institution" required>
+
+                    <select id="courseSelect" required>
+                    </select>
+
+                </div>
+
+                <button type="submit">
+                    Register Now
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+
+        const supabase =
+            window.supabase.createClient(
+                "https://pqgkdnxdsybcfamwadrf.supabase.co",
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZ2tkbnhkc3liY2ZhbXdhZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MzE0NjUsImV4cCI6MjA5NzEwNzQ2NX0.lugWuqNI5VMy6hCn-y38-hi825pIHcUjOCAWCsMJz4c"
+            );
+
+        async function loadCourses() {
+
+            const { data, error } =
+                await supabase
+                    .from('courses')
+                    .select('*');
+
+            if (error) {
+                console.log(error);
+                return;
+            }
+
+            document.getElementById('courseCards').innerHTML =
+                data.map(course => `
+            <div class="course-card">
+                <div class="course-name">
+                    ${course.name}
+                </div>
+
+                <div class="seat-number">
+                    ${course.seats}
+                </div>
+
+                <div class="seat-text">
+                    Chairs
+                </div>
+            </div>
+        `).join('');
+
+            document.getElementById('todayDate').innerHTML =
+                new Date().toLocaleDateString();
+
+            document.getElementById('courseSelect').innerHTML =
+                data
+                    .filter(c => c.seats > 0)
+                    .map(c => `
+            <option value="${c.id}">
+                ${c.name} (${c.seats} chairs)
+            </option>
+        `)
+                    .join('');
+        }
+
+        loadCourses();
+
+        document
+            .getElementById('registrationForm')
+            .addEventListener('submit', async function (e) {
+
+                e.preventDefault();
+
+                const courseId =
+                    Number(
+                        document.getElementById('courseSelect').value
+                    );
+
+                const { data: course } =
+                    await supabase
+                        .from('courses')
+                        .select('*')
+                        .eq('id', courseId)
+                        .single();
+
+                if (course.seats <= 0) {
+                    alert('No seats available.');
+                    return;
+                }
+
+                await supabase
+                    .from('registrations')
+                    .insert({
+                        student_name:
+                            document.getElementById('studentName').value,
+
+                        staff_name:
+                            document.getElementById('staffName').value,
+
+                        staff_number:
+                            document.getElementById('staffNumber').value,
+
+                        institution:
+                            document.getElementById('institution').value,
+
+                        course_id:
+                            courseId
+                    });
+
+                await supabase
+                    .from('courses')
+                    .update({
+                        seats:
+                            course.seats - 1
+                    })
+                    .eq('id', courseId);
+
+                alert('Registration saved.');
+
+                this.reset();
+
+                loadCourses();
+            });
+
+    </script>
+
+</body>
+
+</html>
