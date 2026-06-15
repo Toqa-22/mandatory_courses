@@ -46,6 +46,14 @@
             margin-bottom: 40px;
         }
 
+        /* FIXED: layout for course cards */
+        #courseCards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+
         .course-card,
         .date-card {
             width: 220px;
@@ -169,15 +177,11 @@
                 <div class="form-grid">
 
                     <input type="text" id="studentName" placeholder="Your Name" required>
-
                     <input type="text" id="staffName" placeholder="Staff Name" required>
-
                     <input type="text" id="staffNumber" placeholder="Staff Number" required>
-
                     <input type="text" id="institution" placeholder="Institution" required>
 
-                    <select id="courseSelect" required>
-                    </select>
+                    <select id="courseSelect" required></select>
 
                 </div>
 
@@ -198,7 +202,7 @@
         const supabase =
             window.supabase.createClient(
                 "https://pqgkdnxdsybcfamwadrf.supabase.co",
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZ2tkbnhkc3liY2ZhbXdhZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MzE0NjUsImV4cCI6MjA5NzEwNzQ2NX0.lugWuqNI5VMy6hCn-y38-hi825pIHcUjOCAWCsMJz4c"
+                "YOUR_ANON_KEY"
             );
 
         async function loadCourses() {
@@ -215,20 +219,20 @@
 
             document.getElementById('courseCards').innerHTML =
                 data.map(course => `
-            <div class="course-card">
-                <div class="course-name">
-                    ${course.name}
-                </div>
+                    <div class="course-card">
+                        <div class="course-name">
+                            ${course.name}
+                        </div>
 
-                <div class="seat-number">
-                    ${course.seats}
-                </div>
+                        <div class="seat-number">
+                            ${course.seats}
+                        </div>
 
-                <div class="seat-text">
-                    Chairs
-                </div>
-            </div>
-        `).join('');
+                        <div class="seat-text">
+                            Chairs
+                        </div>
+                    </div>
+                `).join('');
 
             document.getElementById('todayDate').innerHTML =
                 new Date().toLocaleDateString();
@@ -237,10 +241,10 @@
                 data
                     .filter(c => c.seats > 0)
                     .map(c => `
-            <option value="${c.id}">
-                ${c.name} (${c.seats} chairs)
-            </option>
-        `)
+                        <option value="${c.id}">
+                            ${c.name} (${c.seats} chairs)
+                        </option>
+                    `)
                     .join('');
         }
 
@@ -252,17 +256,21 @@
 
                 e.preventDefault();
 
-                const courseId =
-                    Number(
-                        document.getElementById('courseSelect').value
-                    );
+                const courseId = Number(
+                    document.getElementById('courseSelect').value
+                );
 
-                const { data: course } =
+                const { data: course, error } =
                     await supabase
                         .from('courses')
                         .select('*')
                         .eq('id', courseId)
                         .single();
+
+                if (error || !course) {
+                    alert("Course error");
+                    return;
+                }
 
                 if (course.seats <= 0) {
                     alert('No seats available.');
@@ -272,34 +280,21 @@
                 await supabase
                     .from('registrations')
                     .insert({
-                        student_name:
-                            document.getElementById('studentName').value,
-
-                        staff_name:
-                            document.getElementById('staffName').value,
-
-                        staff_number:
-                            document.getElementById('staffNumber').value,
-
-                        institution:
-                            document.getElementById('institution').value,
-
-                        course_id:
-                            courseId
+                        student_name: document.getElementById('studentName').value,
+                        staff_name: document.getElementById('staffName').value,
+                        staff_number: document.getElementById('staffNumber').value,
+                        institution: document.getElementById('institution').value,
+                        course_id: courseId
                     });
 
                 await supabase
                     .from('courses')
-                    .update({
-                        seats:
-                            course.seats - 1
-                    })
+                    .update({ seats: course.seats - 1 })
                     .eq('id', courseId);
 
                 alert('Registration saved.');
 
                 this.reset();
-
                 loadCourses();
             });
 
