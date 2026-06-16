@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrations</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fc;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 50px;
+            color: #0f172a;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 40px;
+        }
+
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            width: 220px;
+            background: white;
+            border-radius: 25px;
+            padding: 35px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+            transition: .3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+        }
+
+        .stat-label {
+            font-size: 18px;
+            color: #2563eb;
+            margin-bottom: 15px;
+        }
+
+        .stat-number {
+            font-size: 55px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .stat-text {
+            color: #64748b;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        .table-card {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+            overflow-x: auto;
+        }
+
+        .table-card h2 {
+            margin-bottom: 30px;
+            color: #0f172a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+
+        thead tr {
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            color: white;
+        }
+
+        thead th {
+            padding: 15px 20px;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        thead th:first-child {
+            border-radius: 12px 0 0 12px;
+        }
+
+        thead th:last-child {
+            border-radius: 0 12px 12px 0;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: .2s;
+        }
+
+        tbody tr:hover {
+            background: #f8faff;
+        }
+
+        tbody td {
+            padding: 15px 20px;
+            color: #0f172a;
+        }
+
+        .course-badge {
+            background: #eff6ff;
+            color: #2563eb;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px;
+            color: #64748b;
+            font-size: 18px;
+        }
+
+        .export-btn {
+            float: right;
+            margin-bottom: 20px;
+            padding: 12px 28px;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            border: none;
+            color: white;
+            font-size: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            width: auto;
+        }
+
+        .export-btn:hover {
+            opacity: .9;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1 class="title">Registrations</h1>
+        <p class="subtitle">All submitted registration data</p>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="table-card">
+            <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+            <h2>Registration Data</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student Name</th>
+                        <th>Staff Name</th>
+                        <th>Staff Number</th>
+                        <th>Institution</th>
+                        <th>Course</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const client = createClient(
+            "https://pqgkdnxdsybcfamwadrf.supabase.co",
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZ2tkbnhkc3liY2ZhbXdhZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MzE0NjUsImV4cCI6MjA5NzEwNzQ2NX0.lugWuqNI5VMy6hCn-y38-hi825pIHcUjOCAWCsMJz4c"
+        );
+
+        let allData = [];
+
+        async function loadData() {
+            const { data: courses } = await client.from('courses').select('*');
+            const { data: regs, error } = await client
+                .from('registrations')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.log("Error:", error);
+                return;
+            }
+
+            allData = regs.map(r => ({
+                ...r,
+                course_name: courses.find(c => c.id === r.course_id)?.name || 'N/A'
+            }));
+
+            // Stats
+            const totalRegs = allData.length;
+            const courseCount = {};
+            allData.forEach(r => {
+                courseCount[r.course_name] = (courseCount[r.course_name] || 0) + 1;
+            });
+
+            let statsHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Total</div>
+                    <div class="stat-number">${totalRegs}</div>
+                    <div class="stat-text">Registrations</div>
+                </div>
+            `;
+
+            courses.forEach(c => {
+                statsHTML += `
+                    <div class="stat-card">
+                        <div class="stat-label">${c.name}</div>
+                        <div class="stat-number">${courseCount[c.name] || 0}</div>
+                        <div class="stat-text">Registered</div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('stats').innerHTML = statsHTML;
+
+            // Table
+            if (allData.length === 0) {
+                document.getElementById('tableBody').innerHTML = `
+                    <tr><td colspan="7" class="empty">No registrations yet.</td></tr>
+                `;
+                return;
+            }
+
+            document.getElementById('tableBody').innerHTML = allData.map((r, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${r.student_name}</td>
+                    <td>${r.staff_name}</td>
+                    <td>${r.staff_number}</td>
+                    <td>${r.institution}</td>
+                    <td><span class="course-badge">${r.course_name}</span></td>
+                    <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        loadData();
+
+        window.exportCSV = function () {
+            if (allData.length === 0) {
+                alert("No data to export.");
+                return;
+            }
+
+            const headers = ['#', 'Student Name', 'Staff Name', 'Staff Number', 'Institution', 'Course', 'Date'];
+            const rows = allData.map((r, i) => [
+                i + 1,
+                r.student_name,
+                r.staff_name,
+                r.staff_number,
+                r.institution,
+                r.course_name,
+                new Date(r.created_at).toLocaleDateString()
+            ]);
+
+            const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'registrations.csv';
+            a.click();
+        }
+    </script>
+
+</body>
+</html>
