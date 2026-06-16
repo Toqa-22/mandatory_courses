@@ -127,9 +127,14 @@
             border-color: #2563eb;
         }
 
-        button {
-            width: 100%;
+        .btn-row {
+            display: flex;
+            gap: 15px;
             margin-top: 30px;
+        }
+
+        .btn-register {
+            flex: 1;
             padding: 18px;
             background: linear-gradient(90deg, #2563eb, #7c3aed);
             border: none;
@@ -139,8 +144,23 @@
             cursor: pointer;
         }
 
-        button:hover {
+        .btn-register:hover {
             opacity: .9;
+        }
+
+        .btn-view {
+            flex: 1;
+            padding: 18px;
+            background: white;
+            border: 2px solid #2563eb;
+            color: #2563eb;
+            font-size: 18px;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+
+        .btn-view:hover {
+            background: #eff6ff;
         }
     </style>
 </head>
@@ -169,7 +189,10 @@
                 <input type="text" id="institution" placeholder="Institution">
                 <select id="courseSelect"></select>
             </div>
-            <button onclick="handleSubmit()">Register Now</button>
+            <div class="btn-row">
+                <button class="btn-register" onclick="handleSubmit()">Register Now</button>
+                <button class="btn-view" onclick="window.location.href='registrations.html'">View Registrations</button>
+            </div>
         </div>
 
     </div>
