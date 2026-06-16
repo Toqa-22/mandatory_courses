@@ -126,23 +126,50 @@
             grid-column: 1 / -1;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            padding: 25px;
+            border-radius: 20px;
         }
 
         .file-upload-wrapper label {
-            font-size: 15px;
-            color: #475569;
+            font-size: 16px;
+            color: #0f172a;
             font-weight: bold;
-            padding-left: 5px;
+        }
+
+        /* Container styling for the explicit file reference card */
+        .example-preview-container {
+            margin-top: 5px;
+            margin-bottom: 10px;
+        }
+
+        .example-preview-container span {
+            display: block;
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .example-img {
+            max-width: 280px;
+            max-height: 180px;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            background: white;
         }
 
         .file-input {
             padding: 12px;
-            background: #f8fafc;
-            border: 2px dashed #cbd5e1;
+            background: white;
+            border: 1px solid #cbd5e1;
             cursor: pointer;
             width: 100%;
-            border-radius: 15px;
+            border-radius: 12px;
         }
 
         .file-input:focus {
@@ -215,6 +242,13 @@
                 
                 <div class="file-upload-wrapper">
                     <label for="fileUpload">Upload Document / Image (Required) *</label>
+                    
+                    <!-- Added visual layout showcasing reference asset imj.png verbatim -->
+                    <div class="example-preview-container">
+                        <span>Example document reference requirement style:</span>
+                        <img src="imj.png" alt="Upload Requirement Example" class="example-img">
+                    </div>
+
                     <input type="file" id="fileUpload" class="file-input" accept="image/*, .pdf">
                 </div>
             </div>
@@ -271,13 +305,11 @@
             const fileInput   = document.getElementById('fileUpload');
             const file = fileInput.files[0];
 
-            // STRICT FRONTEND VALIDATION
             if (!phoneNumber || !staffName || !staffNumber || !institution || !courseId) {
                 alert("Please fill in all textual fields.");
                 return;
             }
 
-            // CRITICAL CHECK: Block submission if file is missing
             if (!file) {
                 alert("Registration denied! You must upload an image or PDF document to register.");
                 return;
@@ -303,7 +335,6 @@
                     return;
                 }
 
-                // Upload to Storage Bucket (Ensure bucket "registration-files" is public in Supabase dashboard)
                 const fileExtension = file.name.split('.').pop();
                 const uniqueFileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
 
@@ -321,14 +352,13 @@
 
                 const finalFileUrl = publicUrlData.publicUrl;
 
-                // Save to database
                 const { error: insertError } = await client.from('registrations').insert({
                     phone_number: phoneNumber,
                     staff_name:   staffName,
                     staff_number: staffNumber,
                     institution:  institution,
                     course_id:    courseId,
-                    file_url:     finalFileUrl // Saves the link securely
+                    file_url:     finalFileUrl
                 });
 
                 if (insertError) {
@@ -341,7 +371,6 @@
 
                 alert('Registration successfully saved with document attachment!');
 
-                // Reset Form
                 document.getElementById('phoneNumber').value = '';
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
