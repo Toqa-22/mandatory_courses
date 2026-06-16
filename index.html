@@ -20,8 +20,10 @@
         .form-card { background: white; padding: 40px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, .08); }
         .form-card h2 { margin-bottom: 30px; color: #0f172a; }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        input, select { width: 100%; padding: 16px; border: 1px solid #d1d5db; border-radius: 15px; font-size: 16px; }
+        input, select { width: 100%; padding: 16px; border: 1px solid #d1d5db; border-radius: 15px; font-size: 16px; background-color: white; }
         input:focus, select:focus { outline: none; border-color: #2563eb; }
+        .form-group-full { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; }
+        .form-group-full label { font-size: 14px; font-weight: bold; color: #334155; }
         
         .dynamic-uploads-wrapper { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
         .single-upload-box { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 15px; display: flex; flex-direction: column; gap: 8px; }
@@ -37,8 +39,8 @@
 <body>
 
     <div class="container">
-        <h1 class="title">Mandatory Course</h1>
-        <p class="subtitle">Please fill the form below to register.</p>
+        <h1 class="title">Mandatory Course Registration</h1>
+        <p class="subtitle">Please input details and select an authorized institution containing slot availability.</p>
 
         <div class="top-cards">
             <div id="courseCards"></div>
@@ -47,11 +49,21 @@
         <div class="form-card">
             <h2>Registration Form</h2>
             <div class="form-grid">
-                <input type="tel" id="phoneNumber" placeholder="Phone Number">
-                <input type="text" id="staffName" placeholder="Staff Name">
-                <input type="text" id="staffNumber" placeholder="Staff Number">
-                <input type="text" id="institution" placeholder="Institution">
-                <select id="courseSelect" onchange="renderDynamicUploadBoxes()"></select>
+                <input type="tel" id="phoneNumber" placeholder="Phone Number" required>
+                <input type="text" id="staffName" placeholder="Staff Name" required>
+                <input type="text" id="staffNumber" placeholder="Staff Number" required>
+                
+                <div class="form-group-full">
+                    <label for="institutionSelect">Select Your Institution (Only shows those with open quotas)</label>
+                    <select id="institutionSelect" required>
+                        <option value="">-- Choose Institution --</option>
+                    </select>
+                </div>
+
+                <div class="form-group-full">
+                    <label for="courseSelect">Choose Target Session Course</label>
+                    <select id="courseSelect" onchange="renderDynamicUploadBoxes()" required></select>
+                </div>
                 
                 <div class="dynamic-uploads-wrapper" id="dynamicUploadsContainer"></div>
             </div>
@@ -71,14 +83,21 @@
         );
 
         let coursesCached = [];
+        let institutionsCached = [];
 
-        async function loadCourses() {
-            const { data, error } = await client.from('courses').select('*').order('id', { ascending: true });
-            if (error) return console.log("Database fetch error:", error);
+        async function loadRegistrationFormConfig() {
+            // Fetch Course Data
+            const { data: courses, error: courseErr } = await client.from('courses').select('*').order('id', { ascending: true });
+            if (courseErr) return console.log("Database fetch error:", courseErr);
+            coursesCached = courses;
 
-            coursesCached = data;
+            // Fetch Institution Pool
+            const { data: institutions, error: instErr } = await client.from('institutions').select('*').order('name', { ascending: true });
+            if (instErr) return console.log("Institution pool fetch error:", instErr);
+            institutionsCached = institutions;
 
-            document.getElementById('courseCards').innerHTML = data.map(course => {
+            // Render visual cards setup overview
+            document.getElementById('courseCards').innerHTML = courses.map(course => {
                 const labels = Array.isArray(course.file_labels) ? course.file_labels : ["Required Document"];
                 return `
                     <div class="course-card">
@@ -91,10 +110,19 @@
                 `;
             }).join('');
 
-            const selectableCourses = data.filter(c => c.seats > 0);
+            // Render Select Dropdown for open selectable courses
+            const selectableCourses = courses.filter(c => c.seats > 0);
             document.getElementById('courseSelect').innerHTML = selectableCourses
-                .map(c => `<option value="${c.id}">${c.name} (${c.seats} chairs)</option>`)
+                .map(c => `<option value="${c.id}">${c.name} (${c.seats} chairs left)</option>`)
                 .join('');
+
+            // CRITICAL LOGIC: Filter choices down dynamically. 
+            // Only displays institutions where current signups are strictly less than max allotted capacity threshold.
+            const openInstitutions = institutions.filter(i => i.registered_count < i.max_slots);
+            
+            const instDropdown = document.getElementById('institutionSelect');
+            instDropdown.innerHTML = '<option value="">-- Choose Institution --</option>' + 
+                openInstitutions.map(i => `<option value="${i.id}">${i.name} (${i.max_slots - i.registered_count} remaining slots)</option>`).join('');
 
             renderDynamicUploadBoxes();
         }
@@ -105,11 +133,10 @@
             const container = document.getElementById('dynamicUploadsContainer');
             
             if (!selectedCourse) {
-                container.innerHTML = '<div style="color: #64748b; padding: 10px;">No available course chosen.</div>';
+                container.innerHTML = '<div style="color: #64748b; padding: 10px;">No available session course selected.</div>';
                 return;
             }
 
-            // Read the specific description strings saved from config page
             const labels = Array.isArray(selectedCourse.file_labels) && selectedCourse.file_labels.length > 0 
                 ? selectedCourse.file_labels 
                 : ["Required Document"];
@@ -127,37 +154,44 @@
             const phoneNumber = document.getElementById('phoneNumber').value;
             const staffName   = document.getElementById('staffName').value;
             const staffNumber = document.getElementById('staffNumber').value;
-            const institution = document.getElementById('institution').value;
+            const institutionId = document.getElementById('institutionSelect').value;
             const courseId    = Number(document.getElementById('courseSelect').value);
             
             const fileInputs  = document.querySelectorAll('.custom-file-target');
 
-            if (!phoneNumber || !staffName || !staffNumber || !institution || !courseId) {
-                alert("Please fill in all text fields.");
+            if (!phoneNumber || !staffName || !staffNumber || !institutionId || !courseId) {
+                alert("Please complete all text fields and drop down selections.");
                 return;
             }
 
-            const uploadedUrls = [];
+            // Client checking verification for missing uploaded items
             for (let input of fileInputs) {
                 if (!input.files || input.files.length === 0) {
-                    alert(`Registration denied! You missed uploading: "${input.getAttribute('data-label')}"`);
+                    alert(`Registration denied! Missing file target object: "${input.getAttribute('data-label')}"`);
                     return;
                 }
             }
 
             regBtn.disabled = true;
-            regBtn.innerText = "Uploading files sequentially...";
+            regBtn.innerText = "Processing server storage sequence uploads...";
 
             try {
                 const currentCourse = coursesCached.find(c => c.id === courseId);
+                const currentInst = institutionsCached.find(i => i.id === Number(institutionId));
 
+                // Extra safety re-check for structural boundaries
+                if (!currentInst || currentInst.registered_count >= currentInst.max_slots) {
+                    throw new Error("This institution structural allotment allocation has just reached full bounds limit! Choose another.");
+                }
+
+                const uploadedUrls = [];
                 for (let i = 0; i < fileInputs.length; i++) {
                     const currentFile = fileInputs[i].files[0];
                     const fileExtension = currentFile.name.split('.').pop();
                     const cleanLabel = fileInputs[i].getAttribute('data-label').replace(/[^a-z0-9]/gi, '_').toLowerCase();
                     const uniqueFileName = `${Date.now()}_${cleanLabel}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
 
-                    const { data: uploadData, error: uploadError } = await client.storage
+                    const { error: uploadError } = await client.storage
                         .from('registration-files')
                         .upload(uniqueFileName, currentFile);
 
@@ -170,40 +204,48 @@
                     uploadedUrls.push(publicUrlData.publicUrl);
                 }
 
+                // Write registration log history entry
                 const { error: insertError } = await client.from('registrations').insert({
                     phone_number: phoneNumber,
                     staff_name: staffName,
                     staff_number: staffNumber,
-                    institution: institution,
+                    institution_id: currentInst.id,
+                    institution_name_snapshot: currentInst.name, // saves textual historical value snapshot string
                     course_id: courseId,
                     file_urls: uploadedUrls
                 });
 
                 if (insertError) throw new Error("Database Write Error: " + insertError.message);
 
+                // Deduct 1 seat count chair capacity from course configurations row
                 await client.from('courses')
                     .update({ seats: currentCourse.seats - 1 })
                     .eq('id', courseId);
 
-                alert('Registration successfully verified and completed!');
+                // Increment institution count utilization indicator +1
+                await client.from('institutions')
+                    .update({ registered_count: currentInst.registered_count + 1 })
+                    .eq('id', currentInst.id);
+
+                alert('Registration verified and successfully logged!');
 
                 document.getElementById('phoneNumber').value = '';
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
-                document.getElementById('institution').value = '';
+                document.getElementById('institutionSelect').value = '';
                 
-                await loadCourses();
+                await loadRegistrationFormConfig();
 
             } catch (err) {
                 console.error(err);
-                alert(err.message || "An unexpected processing issue occurred.");
+                alert(err.message || "An error occurred processing registration setup parameters.");
             } finally {
                 regBtn.disabled = false;
                 regBtn.innerText = "Register Now";
             }
         };
 
-        loadCourses();
+        loadRegistrationFormConfig();
     </script>
 </body>
 </html>
