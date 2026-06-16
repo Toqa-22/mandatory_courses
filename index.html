@@ -81,16 +81,17 @@
                     <label for="departmentSelect">Select Department (Max 3 chairs per department)</label>
                     <select id="departmentSelect" onchange="handleDepartmentChange()">
                         <option value="">-- Choose Department --</option>
-                        <option value="Emergency Department">Emergency Department</option>
+                        <option value="Emergency Department Doctor">Emergency Department Doctor</option>
+                        <option value="Emergency Department Nurse">Emergency Department Nurse</option>
                         <option value="Internal Medicine Department">Internal Medicine Department</option>
                         <option value="General Surgery Department">General Surgery Department</option>
-                        <option value="Pediatrics Department">Pediatrics Department</option>
+                        <option value="Paediatrician">Paediatrician</option>
                         <option value="Obstetrics and Gynecology Department">Obstetrics and Gynecology Department</option>
                         <option value="Orthopedics Department">Orthopedics Department</option>
                         <option value="Ophthalmology Department">Ophthalmology Department</option>
                         <option value="ENT Department">ENT Department</option>
                         <option value="Anesthesia Department">Anesthesia Department</option>
-                        <option value="Dialysis Unit">Dialysis Unit</option>
+                        <option value="Dialysis Unit Nurse">Dialysis Unit Nurse</option>
                         <option value="Radiology Department">Radiology Department</option>
                         <option value="Laboratory Department">Laboratory Department</option>
                         <option value="Physiotherapy Department">Physiotherapy Department</option>
@@ -102,6 +103,8 @@
                         <option value="Obstetrics and Gynecology Ward">Obstetrics and Gynecology Ward</option>
                         <option value="Adult Intensive Care Unit (ICU)">Adult Intensive Care Unit (ICU)</option>
                         <option value="Special Care Baby Unit (SCBU)">Special Care Baby Unit (SCBU)</option>
+                        <option value="OPD">OPD</option>
+                        <option value="Nephrologist">Nephrologist</option>
                     </select>
                 </div>
 
@@ -138,13 +141,14 @@
         let registrationLogsCached = [];
 
         const departmentsList = [
-            "Emergency Department", "Internal Medicine Department", "General Surgery Department",
-            "Pediatrics Department", "Obstetrics and Gynecology Department", "Orthopedics Department",
+            "Emergency Department Doctor", "Emergency Department Nurse", "Internal Medicine Department", "General Surgery Department",
+            "Paediatrician", "Obstetrics and Gynecology Department", "Orthopedics Department",
             "Ophthalmology Department", "ENT Department", "Anesthesia Department",
-            "Dialysis Unit", "Radiology Department", "Medical Laboratory Department",
+            "Dialysis Unit Nurse", "Radiology Department", "Medical Laboratory Department",
             "Physiotherapy Department", "Clinical Nutrition Department", "Pharmacy Department",
             "Male Medical and Surgical Ward", "Female Medical and Surgical Ward", "Pediatrics Ward",
-            "Obstetrics and Gynecology Ward", "Adult Intensive Care Unit (ICU)", "Special Care Baby Unit (SCBU)"
+            "Obstetrics and Gynecology Ward", "Adult Intensive Care Unit (ICU)", "Special Care Baby Unit (SCBU)", 
+            "OPD", "Nephrologist"
         ];
 
         async function loadRegistrationFormConfig() {
