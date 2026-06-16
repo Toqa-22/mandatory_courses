@@ -186,7 +186,7 @@
                         <th>Staff Number</th>
                         <th>Institution</th>
                         <th>Course</th>
-                        <th>Date</th>
+                        <th>Course Date</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -217,12 +217,16 @@
                 return;
             }
 
-            allData = regs.map(r => ({
-                ...r,
-                course_name: courses.find(c => c.id === r.course_id)?.name || 'N/A'
-            }));
+            allData = regs.map(r => {
+                const targetCourse = courses.find(c => c.id === r.course_id);
+                return {
+                    ...r,
+                    course_name: targetCourse ? targetCourse.name : 'N/A',
+                    course_date: targetCourse ? targetCourse.course_date : 'N/A' // Reference the specific course date
+                };
+            });
 
-            // Stats
+            // Stats aggregation
             const totalRegs = allData.length;
             const courseCount = {};
             allData.forEach(r => {
@@ -249,7 +253,7 @@
 
             document.getElementById('stats').innerHTML = statsHTML;
 
-            // Table
+            // Render Table Rows
             if (allData.length === 0) {
                 document.getElementById('tableBody').innerHTML = `
                     <tr><td colspan="7" class="empty">No registrations yet.</td></tr>
@@ -265,7 +269,7 @@
                     <td>${r.staff_number}</td>
                     <td>${r.institution}</td>
                     <td><span class="course-badge">${r.course_name}</span></td>
-                    <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                    <td>${r.course_date}</td>
                 </tr>
             `).join('');
         }
@@ -278,19 +282,19 @@
                 return;
             }
 
-            const headers = ['#', 'Student Name', 'Staff Name', 'Staff Number', 'Institution', 'Course', 'Date'];
+            const headers = ['#', 'Student Name', 'Staff Name', 'Staff Number', 'Institution', 'Course', 'Course Date'];
             const rows = allData.map((r, i) => [
                 i + 1,
-                r.student_name,
-                r.staff_name,
-                r.staff_number,
-                r.institution,
-                r.course_name,
-                new Date(r.created_at).toLocaleDateString()
+                `"${r.student_name.replace(/"/g, '""')}"`,
+                `"${r.staff_name.replace(/"/g, '""')}"`,
+                `"${r.staff_number.replace(/"/g, '""')}"`,
+                `"${r.institution.replace(/"/g, '""')}"`,
+                `"${r.course_name.replace(/"/g, '""')}"`,
+                r.course_date
             ]);
 
             const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
