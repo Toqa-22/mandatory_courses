@@ -6,76 +6,89 @@
     <title>Course Enrollment Portal</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
-        body { background: #f8fafc; color: #0f172a; padding: 30px 15px; }
-        .wrapper { max-width: 650px; margin: auto; }
-        .form-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.04); margin-bottom: 25px; border: 1px solid #e2e8f0; }
-        h2 { font-size: 22px; margin-bottom: 20px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; color: #475569; }
-        input, select { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 15px; background: #fff; transition: all 0.2s; }
-        input:focus, select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 4px #dbeafe; }
+        body { background: #f4f7fc; min-height: 100vh; padding: 40px 20px; color: #0f172a; }
+        .container { max-width: 600px; margin: auto; }
+        .title { text-align: center; font-size: 36px; color: #0f172a; margin-bottom: 10px; font-weight: bold; }
+        .subtitle { text-align: center; color: #64748b; margin-bottom: 30px; font-size: 16px; }
         
-        .upload-row { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .upload-row p { font-size: 13px; color: #64748b; margin-bottom: 8px; }
-        .upload-row a { font-size: 12px; color: #2563eb; text-decoration: none; font-weight: bold; }
-        .upload-row a:hover { text-decoration: underline; }
+        .card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,.06); margin-bottom: 30px; }
+        .card h2 { margin-bottom: 20px; color: #0f172a; font-size: 22px; }
         
-        .no-attachments-msg { background: #f0fdf4; border: 1px dashed #22c55e; color: #15803d; padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; font-size: 14px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #334155; font-size: 14px; font-weight: bold; }
+        input, select { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 15px; background: white; }
+        input:focus, select:focus { outline: none; border-color: #2563eb; }
         
-        .btn-submit { width: 100%; padding: 15px; background: #2563eb; border: none; color: white; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-        .btn-submit:hover { background: #1d4ed8; }
-        .info-text { font-size: 12px; color: #64748b; text-align: center; margin-top: 15px; }
+        .descriptions-panel { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; margin-top: 10px; display: flex; flex-direction: column; gap: 15px; }
+        .descriptions-panel h4 { font-size: 13px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .desc-row { background: white; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 8px; }
+        .desc-row span { font-size: 13px; color: #2563eb; font-weight: bold; }
+        .desc-row p { font-size: 13px; color: #64748b; }
+        .desc-row a { font-size: 12px; color: #2563eb; text-decoration: none; font-weight: bold; width: fit-content; }
+        .desc-row a:hover { text-decoration: underline; }
+        .desc-row input[type="file"] { border: none; padding: 5px 0; background: transparent; }
+
+        .no-attachments-badge { background: #f0fdf4; color: #16a34a; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: bold; text-align: center; border: 1px dashed #22c55e; }
+
+        .btn-submit { width: 100%; padding: 14px; background: linear-gradient(90deg, #2563eb, #7c3aed); border: none; color: white; font-size: 16px; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .btn-submit:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
 
-    <div class="wrapper">
-        <form id="enrollmentForm">
-            <div class="form-card">
-                <h2>👤 Applicant Particulars Context</h2>
-                <div class="form-group">
-                    <label>Full Staff Name</label>
-                    <input type="text" id="staffName" placeholder="Enter your full legal name" required>
-                </div>
-                <div class="form-group">
-                    <label>Staff Identification Number</label>
-                    <input type="text" id="staffNumber" placeholder="e.g., ST-99281" required>
-                </div>
-                <div class="form-group">
-                    <label>Contact Phone Number</label>
-                    <input type="tel" id="phoneNumber" placeholder="e.g., +968 9123 4567" required>
-                </div>
-                <div class="form-group">
-                    <label>Institution Name</label>
-                    <input type="text" id="instName" placeholder="e.g., Ibra Regional Hospital" required>
-                </div>
-                <div class="form-group">
-                    <label>Designation Snapshot</label>
-                    <input type="text" id="designation" placeholder="e.g., Registered Staff Nurse" required>
-                </div>
-                <div class="form-group">
-                    <label>Specialization Domain</label>
-                    <input type="text" id="specialization" placeholder="e.g., Intensive Care / Pediatrics" required>
-                </div>
-            </div>
+    <div class="container">
+        <h1 class="title">Course Registration</h1>
+        <p class="subtitle">Fill out your information below to register for the upcoming sessions.</p>
 
-            <div class="form-card">
-                <h2>📚 Target Selection</h2>
+        <form id="enrollmentForm">
+            <div class="card">
+                <h2>Select Course</h2>
                 <div class="form-group">
-                    <label>Choose Program Room Space</label>
+                    <label>Target Course Room Scope</label>
                     <select id="courseSelect" onchange="handleCourseSelectionChange()" required>
                         <option value="">-- Synchronizing Available Courses --</option>
                     </select>
                 </div>
             </div>
 
-            <div class="form-card" id="attachmentFormCard">
-                <h2>📂 Required Verification Materials</h2>
-                <div id="dynamicUploadsContainer"></div>
+            <div class="card">
+                <h2>Staff Information</h2>
+                <div class="form-group">
+                    <label>Full Staff Name</label>
+                    <input type="text" id="staffName" placeholder="e.g., Jane Doe" required>
+                </div>
+                <div class="form-group">
+                    <label>Staff Identification Number</label>
+                    <input type="text" id="staffNumber" placeholder="e.g., ST-12345" required>
+                </div>
+                <div class="form-group">
+                    <label>Contact Phone Number</label>
+                    <input type="tel" id="phoneNumber" placeholder="e.g., +968 9000 0000" required>
+                </div>
+                <div class="form-group">
+                    <label>Institution Official Name</label>
+                    <input type="text" id="instName" placeholder="e.g., City Medical General Hospital" required>
+                </div>
+                <div class="form-group">
+                    <label>Designation Snapshot</label>
+                    <input type="text" id="designation" placeholder="e.g., Medical Officer / Nurse" required>
+                </div>
+                <div class="form-group">
+                    <label>Specialization Domain</label>
+                    <input type="text" id="specialization" placeholder="e.g., Cardiology / General" required>
+                </div>
             </div>
 
-            <button type="submit" class="btn-submit">Transmit Form Registration</button>
-            <p class="info-text">Secure submission gateway connection authenticated into backend registers.</p>
+            <div class="card" id="attachmentFormCard">
+                <h2>Required Verification Materials</h2>
+                <div class="descriptions-panel" id="descriptionsWrapper">
+                    <h4 id="attachmentPanelHeader">Document Descriptions & Examples</h4>
+                    <div id="dynamicUploadsContainer"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Submit Registration</button>
         </form>
     </div>
 
@@ -108,6 +121,8 @@
             const selectElement = document.getElementById('courseSelect');
             const targetCard = document.getElementById('attachmentFormCard');
             const container = document.getElementById('dynamicUploadsContainer');
+            const panelHeader = document.getElementById('attachmentPanelHeader');
+            const wrapper = document.getElementById('descriptionsWrapper');
             
             const selectedId = Number(selectElement.value);
             if (!selectedId) {
@@ -118,30 +133,38 @@
 
             const chosenCourse = systemCoursesMemory.find(c => c.id === selectedId);
             
-            // Check if attachments are explicitly disabled (count is 0 or array is blank)
             const fileLabels = Array.isArray(chosenCourse.file_labels) ? chosenCourse.file_labels : [];
             const fileCount = chosenCourse.required_files !== undefined ? chosenCourse.required_files : fileLabels.length;
 
+            targetCard.style.display = 'block';
+
             if (fileCount === 0 || fileLabels.length === 0) {
-                // HIDE the upload section card completely or show a simple placeholder message
-                targetCard.style.display = 'block';
-                container.innerHTML = `<div class="no-attachments-msg">🎉 This course requires no digital file attachments. Simply submit your form!</div>`;
+                panelHeader.style.display = 'none';
+                wrapper.style.background = 'transparent';
+                wrapper.style.border = 'none';
+                wrapper.style.padding = '0';
+                container.innerHTML = `<div class="no-attachments-badge">✅ This course does not require any attachments.</div>`;
                 return;
             }
 
-            // Otherwise, reveal upload rows natively
-            targetCard.style.display = 'block';
-            const examples = Array.isArray(chosenCourse.file_examples) ? chosenCourse.file_examples : [];
+            // Restore original panels styling context if documents exist
+            panelHeader.style.display = 'block';
+            wrapper.style.background = '#f8fafc';
+            wrapper.style.border = '1px solid #e2e8f0';
+            wrapper.style.padding = '15px';
             
+            const examples = Array.isArray(chosenCourse.file_examples) ? chosenCourse.file_examples : [];
             let uploadHtml = '';
+            
             fileLabels.forEach((label, idx) => {
                 const exampleUrl = examples[idx];
-                const exampleLinkHtml = exampleUrl ? `<br><a href="${exampleUrl}" target="_blank">📥 Click to Download Sample Template</a>` : '';
+                const exampleLinkHtml = exampleUrl ? `<a href="${exampleUrl}" target="_blank">🔗 View Example Template Document</a>` : '';
                 
                 uploadHtml += `
-                    <div class="upload-row">
-                        <label>Slot #${idx + 1}: ${label} *</label>
-                        <p>Please select your file object file below (PDF, PNG, JPG).${exampleLinkHtml}</p>
+                    <div class="desc-row">
+                        <span>Upload slot for ${label}:</span>
+                        <p>Select your file object below (PDF, PNG, JPG).</p>
+                        ${exampleLinkHtml}
                         <input type="file" class="applicant-file-input" data-label="${label}" required>
                     </div>
                 `;
@@ -153,7 +176,7 @@
             e.preventDefault();
             
             const courseId = Number(document.getElementById('courseSelect').value);
-            if (!courseId) return alert("Please select a valid program destination.");
+            if (!courseId) return alert("Please select a valid course destination.");
 
             const chosenCourse = systemCoursesMemory.find(c => c.id === courseId);
             const fileLabels = Array.isArray(chosenCourse.file_labels) ? chosenCourse.file_labels : [];
@@ -168,18 +191,16 @@
 
             let uploadedUrlsArray = [];
 
-            // Process uploads only if files are needed
             if (fileCount > 0 && fileLabels.length > 0) {
                 const fileInputs = document.querySelectorAll('.applicant-file-input');
                 
                 for (let input of fileInputs) {
                     const fileObj = input.files[0];
                     if (!fileObj) {
-                        alert("Please upload all required documentation files before submission.");
+                        alert("Please upload all required documentation files.");
                         return;
                     }
                     
-                    // Create clean file name structure paths
                     const cleanFileName = `${Date.now()}_${staff_number}_${fileObj.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
                     
                     const { data: uploadData, error: uploadErr } = await client.storage
@@ -187,7 +208,7 @@
                         .upload(cleanFileName, fileObj);
 
                     if (uploadErr) {
-                        alert(`Storage core upload fault: ${uploadErr.message}`);
+                        alert(`Storage upload fault: ${uploadErr.message}`);
                         return;
                     }
 
@@ -199,7 +220,6 @@
                 }
             }
 
-            // Push enrollment entry metadata straight to Supabase Table
             const { error: insertErr } = await client.from('registrations').insert({
                 course_id: courseId,
                 staff_name,
@@ -208,13 +228,13 @@
                 institution_name_snapshot,
                 designation_snapshot,
                 specialization_snapshot,
-                file_urls: uploadedUrlsArray // Saves as empty array [] if no file attachments exist
+                file_urls: uploadedUrlsArray
             });
 
             if (insertErr) {
-                alert("Database transactional validation fault: " + insertErr.message);
+                alert("Database submission error: " + insertErr.message);
             } else {
-                alert("Registration records finalized and transmitted securely!");
+                alert("Registration successful!");
                 document.getElementById('enrollmentForm').reset();
                 handleCourseSelectionChange();
             }
