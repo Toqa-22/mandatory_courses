@@ -72,7 +72,14 @@
         .course-name {
             font-size: 30px;
             color: #2563eb;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+        }
+
+        .course-date-display {
+            font-size: 14px;
+            color: #7c3aed;
+            margin-bottom: 15px;
+            font-weight: bold;
         }
 
         .seat-number {
@@ -93,7 +100,8 @@
 
         .date-card p {
             font-size: 22px;
-            color: #0f172a;
+            color: #2563eb;
+            font-weight: bold;
         }
 
         .form-card {
@@ -175,8 +183,8 @@
         <div class="top-cards">
             <div id="courseCards"></div>
             <div class="date-card">
-                <h2>Date</h2>
-                <p id="todayDate"></p>
+                <h2>Selected Course Date</h2>
+                <p id="todayDate">Select a course...</p>
             </div>
         </div>
 
@@ -187,7 +195,7 @@
                 <input type="text" id="staffName" placeholder="Staff Name">
                 <input type="text" id="staffNumber" placeholder="Staff Number">
                 <input type="text" id="institution" placeholder="Institution">
-                <select id="courseSelect"></select>
+                <select id="courseSelect" onchange="updateSelectedDate()"></select>
             </div>
             <div class="btn-row">
                 <button class="btn-register" onclick="handleSubmit()">Register Now</button>
@@ -205,6 +213,8 @@
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZ2tkbnhkc3liY2ZhbXdhZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MzE0NjUsImV4cCI6MjA5NzEwNzQ2NX0.lugWuqNI5VMy6hCn-y38-hi825pIHcUjOCAWCsMJz4c"
         );
 
+        let cachedCourses = [];
+
         async function loadCourses() {
             const { data, error } = await client.from('courses').select('*');
 
@@ -213,20 +223,39 @@
                 return;
             }
 
+            cachedCourses = data;
+
+            // Render course overview cards
             document.getElementById('courseCards').innerHTML = data.map(course => `
                 <div class="course-card">
                     <div class="course-name">${course.name}</div>
+                    <div class="course-date-display">🗓️ ${course.course_date || 'TBD'}</div>
                     <div class="seat-number">${course.seats}</div>
                     <div class="seat-text">Chairs</div>
                 </div>
             `).join('');
 
-            document.getElementById('todayDate').innerHTML = new Date().toLocaleDateString();
-
-            document.getElementById('courseSelect').innerHTML = data
-                .filter(c => c.seats > 0)
+            // Populate the dropdown menu
+            const selectableCourses = data.filter(c => c.seats > 0);
+            document.getElementById('courseSelect').innerHTML = selectableCourses
                 .map(c => `<option value="${c.id}">${c.name} (${c.seats} chairs)</option>`)
                 .join('');
+
+            // Set the date placeholder initially based on the first course option
+            updateSelectedDate();
+        }
+
+        // Updates the standalone date card dynamically when selection switches
+        window.updateSelectedDate = function() {
+            const selectEl = document.getElementById('courseSelect');
+            const selectedId = Number(selectEl.value);
+            const chosenCourse = cachedCourses.find(c => c.id === selectedId);
+            
+            if (chosenCourse) {
+                document.getElementById('todayDate').innerHTML = chosenCourse.course_date || 'TBD';
+            } else {
+                document.getElementById('todayDate').innerHTML = 'N/A';
+            }
         }
 
         loadCourses();
