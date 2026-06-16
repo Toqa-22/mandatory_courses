@@ -67,13 +67,6 @@
                 </select>
 
                 <input type="text" id="specializationInput" placeholder="Specialization" required>
-                
-                <div class="form-group-full">
-                    <label for="courseSelect">Choose Target Session Course</label>
-                    <select id="courseSelect" onchange="handleCourseSelectionChange()" required>
-                        <option value="">-- Choose Course --</option>
-                    </select>
-                </div>
 
                 <div class="form-group-full">
                     <label for="institutionTypeSelect">Institution</label>
@@ -86,7 +79,7 @@
 
                 <div class="form-group-full hidden-element" id="departmentContainer">
                     <label for="departmentSelect">Select Department (Max 3 chairs per department room context)</label>
-                    <select id="departmentSelect">
+                    <select id="departmentSelect" onchange="handleDepartmentChange()">
                         <option value="">-- Choose Department --</option>
                         <option value="Emergency Department">Emergency Department</option>
                         <option value="Internal Medicine Department">Internal Medicine Department</option>
@@ -115,6 +108,13 @@
                 <div class="form-group-full hidden-element" id="otherInstitutionContainer">
                     <label for="otherInstitutionInput">Specify Institution Name</label>
                     <input type="text" id="otherInstitutionInput" placeholder="Enter your official institution details">
+                </div>
+                
+                <div class="form-group-full">
+                    <label for="courseSelect">Choose Target Session Course</label>
+                    <select id="courseSelect" onchange="handleCourseSelectionChange()" required>
+                        <option value="">-- Choose Course --</option>
+                    </select>
                 </div>
                 
                 <div class="dynamic-uploads-wrapper" id="dynamicUploadsContainer"></div>
@@ -197,23 +197,33 @@
             }
         };
 
+        window.handleDepartmentChange = function() {
+            handleCourseSelectionChange();
+        };
+
         function filterIbraDepartments(courseId) {
             const deptDropdown = document.getElementById('departmentSelect');
-            if (!courseId) {
-                deptDropdown.innerHTML = '<option value="">-- Choose Department --</option>';
-                return;
-            }
-
+            const currentSelected = deptDropdown.value;
+            
             let html = '<option value="">-- Choose Department --</option>';
             departmentsList.forEach(dept => {
-                const matchString = `Ibra - ${dept}`;
-                const countFilled = registrationLogsCached.filter(r => r.course_id === courseId && r.institution_name_snapshot === matchString).length;
-                const chairsLeft = Math.max(0, 3 - countFilled);
+                let chairsLeftStr = '';
+                let isClosed = false;
 
-                if (chairsLeft > 0) {
-                    html += `<option value="${dept}">${dept} (${chairsLeft} chairs remaining)</option>`;
+                if (courseId) {
+                    const matchString = `Ibra - ${dept}`;
+                    const countFilled = registrationLogsCached.filter(r => r.course_id === courseId && r.institution_name_snapshot === matchString).length;
+                    const chairsLeft = Math.max(0, 3 - countFilled);
+                    chairsLeftStr = ` (${chairsLeft} chairs remaining)`;
+                    if (chairsLeft <= 0) isClosed = true;
+                }
+
+                const selectedAttr = (dept === currentSelected) ? 'selected' : '';
+
+                if (!isClosed) {
+                    html += `<option value="${dept}" ${selectedAttr}>${dept}${chairsLeftStr}</option>`;
                 } else {
-                    html += `<option value="${dept}" disabled style="color:#cbd5e1;">${dept} (CLOSED - No chairs left)</option>`;
+                    html += `<option value="${dept}" disabled style="color:#cbd5e1;" ${selectedAttr}>${dept} (CLOSED - No chairs left)</option>`;
                 }
             });
             deptDropdown.innerHTML = html;
@@ -328,7 +338,6 @@
                     uploadedUrls.push(publicUrlData.publicUrl);
                 }
 
-                // Submits both designation choice and typed specialization text field
                 const { error: insertError } = await client.from('registrations').insert({
                     phone_number: phoneNumber,
                     staff_name: staffName,
@@ -354,6 +363,7 @@
                 document.getElementById('institutionTypeSelect').value = '';
                 document.getElementById('departmentSelect').value = '';
                 document.getElementById('otherInstitutionInput').value = '';
+                document.getElementById('courseSelect').value = '';
                 
                 document.getElementById('departmentContainer').classList.add('hidden-element');
                 document.getElementById('otherInstitutionContainer').classList.add('hidden-element');
