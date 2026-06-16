@@ -26,11 +26,14 @@
         .form-group-full label { font-size: 14px; font-weight: bold; color: #334155; }
         
         .dynamic-uploads-wrapper { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
-        .single-upload-box { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .single-upload-box { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 15px; display: flex; flex-direction: column; gap: 10px; }
         .single-upload-box label { font-size: 15px; color: #0f172a; font-weight: bold; }
         .single-upload-box label span { color: #dc2626; }
         .file-input { padding: 10px; background: white; border: 1px solid #cbd5e1; cursor: pointer; width: 100%; border-radius: 10px; }
         
+        .example-link { display: inline-block; font-size: 13px; color: #7c3aed; font-weight: bold; text-decoration: none; background: #f3e8ff; padding: 4px 10px; border-radius: 6px; width: fit-content; margin-top: 2px; }
+        .example-link:hover { background: #e9d5ff; }
+
         .btn-row { display: flex; margin-top: 30px; }
         .btn-register { flex: 1; padding: 18px; background: linear-gradient(90deg, #2563eb, #7c3aed); border: none; color: white; font-size: 18px; border-radius: 15px; cursor: pointer; font-weight: bold; }
         .btn-register:disabled { background: #cbd5e1; cursor: not-allowed; }
@@ -88,20 +91,17 @@
         let quotasMapCached = [];
 
         async function loadRegistrationFormConfig() {
-            // Fetch Course Data
             const { data: courses, error: courseErr } = await client.from('courses').select('*').order('id', { ascending: true });
             if (courseErr) return console.log("Database fetch error:", courseErr);
             coursesCached = courses;
 
-            // Fetch course-to-institution breakdown allocations matrix maps data
             const { data: quotas, error: quotaErr } = await client.from('course_institutions').select(`
                 id, course_id, institution_id, max_slots, registered_count,
                 institutions(name)
             `);
-            if (quotaErr) return console.log("Quota configurations lookup mapping tracking view error:", quotaErr);
+            if (quotaErr) return console.log("Quota matrix error:", quotaErr);
             quotasMapCached = quotas || [];
 
-            // Render visual cards setup overview
             document.getElementById('courseCards').innerHTML = courses.map(course => {
                 const labels = Array.isArray(course.file_labels) ? course.file_labels : ["Required Document"];
                 return `
@@ -115,12 +115,10 @@
                 `;
             }).join('');
 
-            // Render Select Dropdown for open selectable courses
             const selectableCourses = courses.filter(c => c.seats > 0);
             document.getElementById('courseSelect').innerHTML = '<option value="">-- Choose Course --</option>' + 
-                selectableCourses.map(c => `<option value="${c.id}">${c.name} (${c.seats} chairs left)</option>`).join('');
+                selectableCourses.map(c => `<option value="${c.id}">${c.name} (🗓️ ${c.course_date}) (${c.seats} chairs left)</option>`).join('');
 
-            // Clean form upload panels if resetting
             handleCourseSelectionChange();
         }
 
@@ -134,7 +132,6 @@
                 return;
             }
 
-            // 1. Filter allocated rules mapping belonging explicitly to this single course scope context
             const courseSpecificQuotas = quotasMapCached.filter(q => q.course_id === courseId && q.registered_count < q.max_slots);
             
             instDropdown.innerHTML = '<option value="">-- Choose Institution --</option>' + 
@@ -144,20 +141,31 @@
                     return `<option value="${q.institution_id}" data-quota-id="${q.id}">${name} (${remaining} slots available)</option>`;
                 }).join('');
 
-            // 2. Render files boxes setup
             const selectedCourse = coursesCached.find(c => c.id === courseId);
             const container = document.getElementById('dynamicUploadsContainer');
             
             const labels = selectedCourse && Array.isArray(selectedCourse.file_labels) && selectedCourse.file_labels.length > 0 
                 ? selectedCourse.file_labels 
                 : ["Required Document"];
+                
+            const examples = selectedCourse && Array.isArray(selectedCourse.file_examples) 
+                ? selectedCourse.file_examples 
+                : [];
             
-            container.innerHTML = labels.map((descText, idx) => `
-                <div class="single-upload-box">
-                    <label>Upload Document #${idx + 1}: <span>${descText} *</span></label>
-                    <input type="file" class="file-input custom-file-target" data-label="${descText}" accept="image/*, .pdf" required>
-                </div>
-            `).join('');
+            container.innerHTML = labels.map((descText, idx) => {
+                const exampleUrl = examples[idx] || '';
+                const exampleLinkHtml = exampleUrl 
+                    ? `<a href="${exampleUrl}" target="_blank" class="example-link">🔍 View Example Template</a>` 
+                    : '';
+
+                return `
+                    <div class="single-upload-box">
+                        <label>Upload Document #${idx + 1}: <span>${descText} *</span></label>
+                        <input type="file" class="file-input custom-file-target" data-label="${descText}" accept="image/*, .pdf" required>
+                        ${exampleLinkHtml}
+                    </div>
+                `;
+            }).join('');
         };
 
         window.handleSubmit = async function () {
@@ -192,15 +200,14 @@
             try {
                 const currentCourse = coursesCached.find(c => c.id === courseId);
                 
-                // Fetch direct real-time rule configuration status record safety validation checks
                 const { data: realTimeRule, error: checkErr } = await client.from('course_institutions')
                     .select('id, max_slots, registered_count, institutions(name)')
                     .eq('id', ruleMappingId)
                     .single();
 
-                if (checkErr || !realTimeRule) throw new Error("Could not verify your institution quota settings configuration rule layout.");
+                if (checkErr || !realTimeRule) throw new Error("Could not verify your institution quota settings configuration.");
                 if (realTimeRule.registered_count >= realTimeRule.max_slots) {
-                    throw new Error(`The allocation quota pool context for ${realTimeRule.institutions?.name || 'your institution'} has just reached max limits boundaries.`);
+                    throw new Error(`The allocation quota pool context has reached max limit bounds.`);
                 }
 
                 const uploadedUrls = [];
@@ -214,7 +221,7 @@
                         .from('registration-files')
                         .upload(uniqueFileName, currentFile);
 
-                    if (uploadError) throw new Error(`Upload Failed for "${fileInputs[i].getAttribute('data-label')}": ` + uploadError.message);
+                    if (uploadError) throw new Error(`Upload Failed: ` + uploadError.message);
 
                     const { data: publicUrlData } = client.storage
                         .from('registration-files')
@@ -223,31 +230,22 @@
                     uploadedUrls.push(publicUrlData.publicUrl);
                 }
 
-                // Write registration log history entry
                 const { error: insertError } = await client.from('registrations').insert({
                     phone_number: phoneNumber,
                     staff_name: staffName,
                     staff_number: staffNumber,
                     institution_id: Number(institutionId),
-                    institution_name_snapshot: realTimeRule.institutions?.name || "Institution Scope Context",
+                    institution_name_snapshot: realTimeRule.institutions?.name || "Institution Context",
                     course_id: courseId,
                     file_urls: uploadedUrls
                 });
 
                 if (insertError) throw new Error("Database Write Error: " + insertError.message);
 
-                // Deduct 1 seat count chair capacity from course configurations row
-                await client.from('courses')
-                    .update({ seats: currentCourse.seats - 1 })
-                    .eq('id', courseId);
-
-                // Increment intersection mapping room quota limit metrics row directly!
-                await client.from('course_institutions')
-                    .update({ registered_count: realTimeRule.registered_count + 1 })
-                    .eq('id', ruleMappingId);
+                await client.from('courses').update({ seats: currentCourse.seats - 1 }).eq('id', courseId);
+                await client.from('course_institutions').update({ registered_count: realTimeRule.registered_count + 1 }).eq('id', ruleMappingId);
 
                 alert('Registration verified and successfully logged!');
-
                 document.getElementById('phoneNumber').value = '';
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
@@ -256,8 +254,7 @@
                 await loadRegistrationFormConfig();
 
             } catch (err) {
-                console.error(err);
-                alert(err.message || "An error occurred processing registration setup parameters.");
+                alert(err.message || "An error occurred.");
             } finally {
                 regBtn.disabled = false;
                 regBtn.innerText = "Register Now";
