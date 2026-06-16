@@ -13,7 +13,6 @@
         .top-cards { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; margin-bottom: 40px; }
         #courseCards { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; }
         .course-card { width: 220px; background: white; border-radius: 25px; padding: 35px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, .08); transition: .3s; }
-        .course-card:hover { transform: translateY(-8px); }
         .course-name { font-size: 30px; color: #2563eb; margin-bottom: 10px; }
         .course-date-display { font-size: 14px; color: #7c3aed; margin-bottom: 15px; font-weight: bold; }
         .seat-number { font-size: 55px; font-weight: bold; color: #0f172a; }
@@ -23,12 +22,15 @@
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         input, select { width: 100%; padding: 16px; border: 1px solid #d1d5db; border-radius: 15px; font-size: 16px; }
         input:focus, select:focus { outline: none; border-color: #2563eb; }
-        .file-upload-wrapper { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 12px; background: #f8fafc; border: 2px dashed #cbd5e1; padding: 25px; border-radius: 20px; }
-        .file-upload-wrapper label { font-size: 16px; color: #0f172a; font-weight: bold; }
-        .file-hint { color: #e11d48; font-weight: bold; font-size: 15px; background: #fff1f2; padding: 8px 15px; border-radius: 8px; display: inline-block; width: fit-content;}
-        .file-input { padding: 12px; background: white; border: 1px solid #cbd5e1; cursor: pointer; width: 100%; border-radius: 12px; }
+        
+        .dynamic-uploads-wrapper { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
+        .single-upload-box { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .single-upload-box label { font-size: 15px; color: #0f172a; font-weight: bold; }
+        .single-upload-box label span { color: #dc2626; }
+        .file-input { padding: 10px; background: white; border: 1px solid #cbd5e1; cursor: pointer; width: 100%; border-radius: 10px; }
+        
         .btn-row { display: flex; margin-top: 30px; }
-        .btn-register { flex: 1; padding: 18px; background: linear-gradient(90deg, #2563eb, #7c3aed); border: none; color: white; font-size: 18px; border-radius: 15px; cursor: pointer; }
+        .btn-register { flex: 1; padding: 18px; background: linear-gradient(90deg, #2563eb, #7c3aed); border: none; color: white; font-size: 18px; border-radius: 15px; cursor: pointer; font-weight: bold; }
         .btn-register:disabled { background: #cbd5e1; cursor: not-allowed; }
     </style>
 </head>
@@ -49,14 +51,11 @@
                 <input type="text" id="staffName" placeholder="Staff Name">
                 <input type="text" id="staffNumber" placeholder="Staff Number">
                 <input type="text" id="institution" placeholder="Institution">
-                <select id="courseSelect" onchange="updateFileRequirementHint()"></select>
+                <select id="courseSelect" onchange="renderDynamicUploadBoxes()"></select>
                 
-                <div class="file-upload-wrapper">
-                    <label for="fileUpload">Upload Documents / Images *</label>
-                    <div class="file-hint" id="fileHint">Select a course to see required file count.</div>
-                    <input type="file" id="fileUpload" class="file-input" accept="image/*, .pdf" multiple>
-                </div>
+                <div class="dynamic-uploads-wrapper" id="dynamicUploadsContainer"></div>
             </div>
+            
             <div class="btn-row">
                 <button class="btn-register" id="regBtn" onclick="handleSubmit()">Register Now</button>
             </div>
@@ -79,31 +78,46 @@
 
             coursesCached = data;
 
-            document.getElementById('courseCards').innerHTML = data.map(course => `
-                <div class="course-card">
-                    <div class="course-name">${course.name}</div>
-                    <div class="course-date-display">🗓️ ${course.course_date}</div>
-                    <div class="seat-number">${course.seats}</div>
-                    <div class="seat-text">Chairs Available</div>
-                    <div style="font-size:12px; margin-top:5px; color:#64748b;">Requires ${course.required_files || 1} file(s)</div>
-                </div>
-            `).join('');
+            document.getElementById('courseCards').innerHTML = data.map(course => {
+                const labels = Array.isArray(course.file_labels) ? course.file_labels : ["Required Document"];
+                return `
+                    <div class="course-card">
+                        <div class="course-name">${course.name}</div>
+                        <div class="course-date-display">🗓️ ${course.course_date}</div>
+                        <div class="seat-number">${course.seats}</div>
+                        <div class="seat-text">Chairs Available</div>
+                        <div style="font-size:12px; margin-top:8px; color:#64748b; font-weight:bold;">Requires: ${labels.length} file(s)</div>
+                    </div>
+                `;
+            }).join('');
 
             const selectableCourses = data.filter(c => c.seats > 0);
             document.getElementById('courseSelect').innerHTML = selectableCourses
                 .map(c => `<option value="${c.id}">${c.name} (${c.seats} chairs)</option>`)
                 .join('');
 
-            updateFileRequirementHint();
+            renderDynamicUploadBoxes();
         }
 
-        window.updateFileRequirementHint = function() {
+        window.renderDynamicUploadBoxes = function() {
             const selectedId = Number(document.getElementById('courseSelect').value);
             const selectedCourse = coursesCached.find(c => c.id === selectedId);
-            if (selectedCourse) {
-                const reqCount = selectedCourse.required_files || 1;
-                document.getElementById('fileHint').innerText = `⚠️ You must choose and upload exactly ${reqCount} separate file attachment(s) for this course selection.`;
+            const container = document.getElementById('dynamicUploadsContainer');
+            
+            if (!selectedCourse) {
+                container.innerHTML = '';
+                return;
             }
+
+            const labels = Array.isArray(selectedCourse.file_labels) ? selectedCourse.file_labels : ["Required Document"];
+            
+            // Generate a dedicated upload element for each specific item text title
+            container.innerHTML = labels.map((labelName, idx) => `
+                <div class="single-upload-box">
+                    <label>Upload Document #${idx + 1}: <span>${labelName} *</span></label>
+                    <input type="file" class="file-input custom-file-target" data-label="${labelName}" accept="image/*, .pdf" required>
+                </div>
+            `).join('');
         };
 
         window.handleSubmit = async function () {
@@ -113,38 +127,40 @@
             const staffNumber = document.getElementById('staffNumber').value;
             const institution = document.getElementById('institution').value;
             const courseId    = Number(document.getElementById('courseSelect').value);
-            const fileInput   = document.getElementById('fileUpload');
-            const files       = fileInput.files;
+            
+            const fileInputs  = document.querySelectorAll('.custom-file-target');
 
             if (!phoneNumber || !staffName || !staffNumber || !institution || !courseId) {
                 alert("Please fill in all text fields.");
                 return;
             }
 
-            const currentCourse = coursesCached.find(c => c.id === courseId);
-            const targetRequiredCount = currentCourse ? (currentCourse.required_files || 1) : 1;
-
-            if (files.length !== targetRequiredCount) {
-                alert(`Registration denied! This chosen course configuration requires exactly ${targetRequiredCount} files submitted. You selected ${files.length}.`);
-                return;
+            // Verify each single separate upload input contains a selected document
+            const uploadedUrls = [];
+            for (let input of fileInputs) {
+                if (!input.files || input.files.length === 0) {
+                    alert(`Registration denied! You missed uploading: "${input.getAttribute('data-label')}"`);
+                    return;
+                }
             }
 
             regBtn.disabled = true;
-            regBtn.innerText = "Processing batch file upload...";
+            regBtn.innerText = "Uploading required files sequentially...";
 
             try {
-                const uploadedUrls = [];
+                const currentCourse = coursesCached.find(c => c.id === courseId);
 
-                for (let i = 0; i < files.length; i++) {
-                    const currentFile = files[i];
+                for (let i = 0; i < fileInputs.length; i++) {
+                    const currentFile = fileInputs[i].files[0];
                     const fileExtension = currentFile.name.split('.').pop();
-                    const uniqueFileName = `${Date.now()}_file${i}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
+                    const cleanLabel = fileInputs[i].getAttribute('data-label').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                    const uniqueFileName = `${Date.now()}_${cleanLabel}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
 
                     const { data: uploadData, error: uploadError } = await client.storage
                         .from('registration-files')
                         .upload(uniqueFileName, currentFile);
 
-                    if (uploadError) throw new Error(`Upload Failed for file [${i+1}]: ` + uploadError.message);
+                    if (uploadError) throw new Error(`Upload Failed for "${fileInputs[i].getAttribute('data-label')}": ` + uploadError.message);
 
                     const { data: publicUrlData } = client.storage
                         .from('registration-files')
@@ -153,7 +169,6 @@
                     uploadedUrls.push(publicUrlData.publicUrl);
                 }
 
-                // Insert into registrations table using PostgreSQL format array strings
                 const { error: insertError } = await client.from('registrations').insert({
                     phone_number: phoneNumber,
                     staff_name: staffName,
@@ -175,8 +190,7 @@
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
                 document.getElementById('institution').value = '';
-                fileInput.value = '';
-
+                
                 loadCourses();
 
             } catch (err) {
