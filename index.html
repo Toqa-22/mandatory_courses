@@ -37,13 +37,15 @@
         .btn-row { display: flex; margin-top: 30px; }
         .btn-register { flex: 1; padding: 18px; background: linear-gradient(90deg, #2563eb, #7c3aed); border: none; color: white; font-size: 18px; border-radius: 15px; cursor: pointer; font-weight: bold; }
         .btn-register:disabled { background: #cbd5e1; cursor: not-allowed; }
+        
+        .hidden-element { display: none !important; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1 class="title">Mandatory Course Registration</h1>
-        <p class="subtitle">Please input details and select an authorized institution containing slot availability.</p>
+        <p class="subtitle">Please input details and complete the authorized departmental parameters.</p>
 
         <div class="top-cards">
             <div id="courseCards"></div>
@@ -52,9 +54,17 @@
         <div class="form-card">
             <h2>Registration Form</h2>
             <div class="form-grid">
-                <input type="tel" id="phoneNumber" placeholder="Phone Number" required>
                 <input type="text" id="staffName" placeholder="Staff Name" required>
                 <input type="text" id="staffNumber" placeholder="Staff Number" required>
+                <input type="tel" id="phoneNumber" placeholder="Phone Number" required>
+                
+                <select id="designationSelect" required>
+                    <option value="">-- Choose Designation --</option>
+                    <option value="Doctor">Doctor</option>
+                    <option value="Nurse">Nurse</option>
+                    <option value="Physician">Physician</option>
+                    <option value="Technician">Technician</option>
+                </select>
                 
                 <div class="form-group-full">
                     <label for="courseSelect">Choose Target Session Course</label>
@@ -64,10 +74,45 @@
                 </div>
 
                 <div class="form-group-full">
-                    <label for="institutionSelect">Select Your Institution (Only shows those with open quotas for this course)</label>
-                    <select id="institutionSelect" required>
-                        <option value="">-- Choose Institution --</option>
+                    <label for="institutionTypeSelect">Institution</label>
+                    <select id="institutionTypeSelect" onchange="handleInstitutionTypeChange()" required>
+                        <option value="">-- Choose Institution Option --</option>
+                        <option value="Ibra">Ibra</option>
+                        <option value="Other">Other</option>
                     </select>
+                </div>
+
+                <div class="form-group-full hidden-element" id="departmentContainer">
+                    <label for="departmentSelect">Select Department (Max 3 chairs per department room context)</label>
+                    <select id="departmentSelect">
+                        <option value="">-- Choose Department --</option>
+                        <option value="Emergency Department">Emergency Department</option>
+                        <option value="Internal Medicine Department">Internal Medicine Department</option>
+                        <option value="General Surgery Department">General Surgery Department</option>
+                        <option value="Pediatrics Department">Pediatrics Department</option>
+                        <option value="Obstetrics and Gynecology Department">Obstetrics and Gynecology Department</option>
+                        <option value="Orthopedics Department">Orthopedics Department</option>
+                        <option value="Ophthalmology Department">Ophthalmology Department</option>
+                        <option value="Ear, Nose and Throat (ENT) Department">Ear, Nose and Throat (ENT) Department</option>
+                        <option value="Anesthesia Department">Anesthesia Department</option>
+                        <option value="Dialysis Unit">Dialysis Unit</option>
+                        <option value="Radiology Department">Radiology Department</option>
+                        <option value="Medical Laboratory Department">Medical Laboratory Department</option>
+                        <option value="Physiotherapy Department">Physiotherapy Department</option>
+                        <option value="Clinical Nutrition Department">Clinical Nutrition Department</option>
+                        <option value="Pharmacy Department">Pharmacy Department</option>
+                        <option value="Male Medical and Surgical Ward">Male Medical and Surgical Ward</option>
+                        <option value="Female Medical and Surgical Ward">Female Medical and Surgical Ward</option>
+                        <option value="Pediatrics Ward">Pediatrics Ward</option>
+                        <option value="Obstetrics and Gynecology Ward">Obstetrics and Gynecology Ward</option>
+                        <option value="Adult Intensive Care Unit (ICU)">Adult Intensive Care Unit (ICU)</option>
+                        <option value="Special Care Baby Unit (SCBU)">Special Care Baby Unit (SCBU)</option>
+                    </select>
+                </div>
+
+                <div class="form-group-full hidden-element" id="otherInstitutionContainer">
+                    <label for="otherInstitutionInput">Specify Institution Name</label>
+                    <input type="text" id="otherInstitutionInput" placeholder="Enter your official institution details">
                 </div>
                 
                 <div class="dynamic-uploads-wrapper" id="dynamicUploadsContainer"></div>
@@ -88,19 +133,28 @@
         );
 
         let coursesCached = [];
-        let quotasMapCached = [];
+        let registrationLogsCached = [];
+
+        // Hardcoded list matches option items text
+        const departmentsList = [
+            "Emergency Department", "Internal Medicine Department", "General Surgery Department",
+            "Pediatrics Department", "Obstetrics and Gynecology Department", "Orthopedics Department",
+            "Ophthalmology Department", "Ear, Nose and Throat (ENT) Department", "Anesthesia Department",
+            "Dialysis Unit", "Radiology Department", "Medical Laboratory Department",
+            "Physiotherapy Department", "Clinical Nutrition Department", "Pharmacy Department",
+            "Male Medical and Surgical Ward", "Female Medical and Surgical Ward", "Pediatrics Ward",
+            "Obstetrics and Gynecology Ward", "Adult Intensive Care Unit (ICU)", "Special Care Baby Unit (SCBU)"
+        ];
 
         async function loadRegistrationFormConfig() {
             const { data: courses, error: courseErr } = await client.from('courses').select('*').order('id', { ascending: true });
             if (courseErr) return console.log("Database fetch error:", courseErr);
             coursesCached = courses;
 
-            const { data: quotas, error: quotaErr } = await client.from('course_institutions').select(`
-                id, course_id, institution_id, max_slots, registered_count,
-                institutions(name)
-            `);
-            if (quotaErr) return console.log("Quota matrix error:", quotaErr);
-            quotasMapCached = quotas || [];
+            // Pull live history logs to dynamically count filled slots per department on the fly
+            const { data: registers, error: regErr } = await client.from('registrations').select('course_id, institution_name_snapshot');
+            if (regErr) return console.log("Logs fetch error:", regErr);
+            registrationLogsCached = registers || [];
 
             document.getElementById('courseCards').innerHTML = courses.map(course => {
                 const labels = Array.isArray(course.file_labels) ? course.file_labels : ["Required Document"];
@@ -122,41 +176,71 @@
             handleCourseSelectionChange();
         }
 
-        window.handleCourseSelectionChange = function() {
+        window.handleInstitutionTypeChange = function() {
+            const type = document.getElementById('institutionTypeSelect').value;
+            const deptContainer = document.getElementById('departmentContainer');
+            const otherContainer = document.getElementById('otherInstitutionContainer');
             const courseId = Number(document.getElementById('courseSelect').value);
-            const instDropdown = document.getElementById('institutionSelect');
-            
+
+            if (type === 'Ibra') {
+                deptContainer.classList.remove('hidden-element');
+                otherContainer.classList.add('hidden-element');
+                document.getElementById('otherInstitutionInput').value = '';
+                filterIbraDepartments(courseId);
+            } else if (type === 'Other') {
+                otherContainer.classList.remove('hidden-element');
+                deptContainer.classList.add('hidden-element');
+                document.getElementById('departmentSelect').value = '';
+            } else {
+                deptContainer.classList.add('hidden-element');
+                otherContainer.classList.add('hidden-element');
+            }
+        };
+
+        function filterIbraDepartments(courseId) {
+            const deptDropdown = document.getElementById('departmentSelect');
             if (!courseId) {
-                instDropdown.innerHTML = '<option value="">-- Choose Institution --</option>';
-                document.getElementById('dynamicUploadsContainer').innerHTML = '<div style="color: #64748b; padding: 10px;">No available session course selected.</div>';
+                deptDropdown.innerHTML = '<option value="">-- Choose Department --</option>';
                 return;
             }
 
-            const courseSpecificQuotas = quotasMapCached.filter(q => q.course_id === courseId && q.registered_count < q.max_slots);
-            
-            instDropdown.innerHTML = '<option value="">-- Choose Institution --</option>' + 
-                courseSpecificQuotas.map(q => {
-                    const remaining = q.max_slots - q.registered_count;
-                    const name = q.institutions?.name || 'Unknown Institution';
-                    return `<option value="${q.institution_id}" data-quota-id="${q.id}">${name} (${remaining} slots available)</option>`;
-                }).join('');
+            let html = '<option value="">-- Choose Department --</option>';
+            departmentsList.forEach(dept => {
+                // Count entries matching this course and this specific department snapshot token
+                const matchString = `Ibra - ${dept}`;
+                const countFilled = registrationLogsCached.filter(r => r.course_id === courseId && r.institution_name_snapshot === matchString).length;
+                const chairsLeft = Math.max(0, 3 - countFilled);
 
-            const selectedCourse = coursesCached.find(c => c.id === courseId);
+                if (chairsLeft > 0) {
+                    html += `<option value="${dept}">${dept} (${chairsLeft} chairs remaining)</option>`;
+                } else {
+                    html += `<option value="${dept}" disabled style="color:#cbd5e1;">${dept} (CLOSED - No chairs left)</option>`;
+                }
+            });
+            deptDropdown.innerHTML = html;
+        }
+
+        window.handleCourseSelectionChange = function() {
+            const courseId = Number(document.getElementById('courseSelect').value);
             const container = document.getElementById('dynamicUploadsContainer');
             
-            const labels = selectedCourse && Array.isArray(selectedCourse.file_labels) && selectedCourse.file_labels.length > 0 
-                ? selectedCourse.file_labels 
-                : ["Required Document"];
-                
-            const examples = selectedCourse && Array.isArray(selectedCourse.file_examples) 
-                ? selectedCourse.file_examples 
-                : [];
+            // Refresh department capacity metrics counters if Ibra is active
+            if (document.getElementById('institutionTypeSelect').value === 'Ibra') {
+                filterIbraDepartments(courseId);
+            }
+            
+            if (!courseId) {
+                container.innerHTML = '<div style="color: #64748b; padding: 10px;">No available session course selected.</div>';
+                return;
+            }
+
+            const selectedCourse = coursesCached.find(c => c.id === courseId);
+            const labels = selectedCourse && Array.isArray(selectedCourse.file_labels) && selectedCourse.file_labels.length > 0 ? selectedCourse.file_labels : ["Required Document"];
+            const examples = selectedCourse && Array.isArray(selectedCourse.file_examples) ? selectedCourse.file_examples : [];
             
             container.innerHTML = labels.map((descText, idx) => {
                 const exampleUrl = examples[idx] || '';
-                const exampleLinkHtml = exampleUrl 
-                    ? `<a href="${exampleUrl}" target="_blank" class="example-link">🔍 View Example Template</a>` 
-                    : '';
+                const exampleLinkHtml = exampleUrl ? `<a href="${exampleUrl}" target="_blank" class="example-link">🔍 View Example Template</a>` : '';
 
                 return `
                     <div class="single-upload-box">
@@ -173,18 +257,32 @@
             const phoneNumber = document.getElementById('phoneNumber').value;
             const staffName   = document.getElementById('staffName').value;
             const staffNumber = document.getElementById('staffNumber').value;
-            const instDropdown = document.getElementById('institutionSelect');
-            const institutionId = instDropdown.value;
+            const designation = document.getElementById('designationSelect').value;
             const courseId    = Number(document.getElementById('courseSelect').value);
+            const instType    = document.getElementById('institutionTypeSelect').value;
             
-            const selectedOption = instDropdown.options[instDropdown.selectedIndex];
-            const ruleMappingId = selectedOption ? Number(selectedOption.getAttribute('data-quota-id')) : null;
-            
-            const fileInputs  = document.querySelectorAll('.custom-file-target');
+            const selectedDept = document.getElementById('departmentSelect').value;
+            const otherText    = document.getElementById('otherInstitutionInput').value.trim();
+            const fileInputs   = document.querySelectorAll('.custom-file-target');
 
-            if (!phoneNumber || !staffName || !staffNumber || !institutionId || !courseId || !ruleMappingId) {
-                alert("Please complete all text fields and drop down selections.");
+            if (!phoneNumber || !staffName || !staffNumber || !designation || !courseId || !instType) {
+                alert("Please complete all text fields and selection items.");
                 return;
+            }
+
+            let institutionSnapshotString = '';
+            if (instType === 'Ibra') {
+                if (!selectedDept) {
+                    alert("Please select your target department.");
+                    return;
+                }
+                institutionSnapshotString = `Ibra - ${selectedDept}`;
+            } else {
+                if (!otherText) {
+                    alert("Please fill in your institution name.");
+                    return;
+                }
+                institutionSnapshotString = otherText;
             }
 
             for (let input of fileInputs) {
@@ -199,15 +297,17 @@
 
             try {
                 const currentCourse = coursesCached.find(c => c.id === courseId);
-                
-                const { data: realTimeRule, error: checkErr } = await client.from('course_institutions')
-                    .select('id, max_slots, registered_count, institutions(name)')
-                    .eq('id', ruleMappingId)
-                    .single();
 
-                if (checkErr || !realTimeRule) throw new Error("Could not verify your institution quota settings configuration.");
-                if (realTimeRule.registered_count >= realTimeRule.max_slots) {
-                    throw new Error(`The allocation quota pool context has reached max limit bounds.`);
+                // Run a real-time safety count query check for Ibra departments to prevent over-allocation races
+                if (instType === 'Ibra') {
+                    const { data: realTimeCheck } = await client.from('registrations')
+                        .select('id')
+                        .eq('course_id', courseId)
+                        .eq('institution_name_snapshot', institutionSnapshotString);
+                    
+                    if (realTimeCheck && realTimeCheck.length >= 3) {
+                        throw new Error("This specific department room row has filled its 3 max chairs cap bounds limit just now. Please pick another department.");
+                    }
                 }
 
                 const uploadedUrls = [];
@@ -234,8 +334,9 @@
                     phone_number: phoneNumber,
                     staff_name: staffName,
                     staff_number: staffNumber,
-                    institution_id: Number(institutionId),
-                    institution_name_snapshot: realTimeRule.institutions?.name || "Institution Context",
+                    designation_snapshot: designation, // Stores your new designation dropdown choice
+                    institution_id: null, // Bypassing matrix foreign key constraint
+                    institution_name_snapshot: institutionSnapshotString,
                     course_id: courseId,
                     file_urls: uploadedUrls
                 });
@@ -243,19 +344,24 @@
                 if (insertError) throw new Error("Database Write Error: " + insertError.message);
 
                 await client.from('courses').update({ seats: currentCourse.seats - 1 }).eq('id', courseId);
-                await client.from('course_institutions').update({ registered_count: realTimeRule.registered_count + 1 }).eq('id', ruleMappingId);
 
                 alert('Registration verified and successfully logged!');
                 document.getElementById('phoneNumber').value = '';
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
-                document.getElementById('courseSelect').value = '';
+                document.getElementById('designationSelect').value = '';
+                document.getElementById('institutionTypeSelect').value = '';
+                document.getElementById('departmentSelect').value = '';
+                document.getElementById('otherInstitutionInput').value = '';
+                
+                document.getElementById('departmentContainer').classList.add('hidden-element');
+                document.getElementById('otherInstitutionContainer').classList.add('hidden-element');
                 
                 await loadRegistrationFormConfig();
 
             } catch (err) {
                 alert(err.message || "An error occurred.");
-            } finally {
+            } lazy {
                 regBtn.disabled = false;
                 regBtn.innerText = "Register Now";
             }
