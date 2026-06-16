@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mandatory Course</title>
+    <title>Mandatory Course Registration</title>
 
     <style>
         * {
@@ -139,7 +139,6 @@
             font-weight: bold;
         }
 
-        /* Container styling for the explicit file reference card */
         .example-preview-container {
             margin-top: 5px;
             margin-bottom: 10px;
@@ -150,16 +149,16 @@
             font-size: 13px;
             color: #64748b;
             margin-bottom: 8px;
-            font-weight: 500;
+            font-weight: bold;
         }
 
         .example-img {
-            max-width: 280px;
-            max-height: 180px;
-            object-fit: contain;
+            max-width: 100%;
+            width: 280px;
+            height: auto;
             border-radius: 12px;
             border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             background: white;
         }
 
@@ -243,9 +242,8 @@
                 <div class="file-upload-wrapper">
                     <label for="fileUpload">Upload Document / Image (Required) *</label>
                     
-                    <!-- Added visual layout showcasing reference asset imj.png verbatim -->
                     <div class="example-preview-container">
-                        <span>Example document reference requirement style:</span>
+                        <span>Required Upload Format Example:</span>
                         <img src="imj.png" alt="Upload Requirement Example" class="example-img">
                     </div>
 
@@ -268,22 +266,19 @@
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZ2tkbnhkc3liY2ZhbXdhZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MzE0NjUsImV4cCI6MjA5NzEwNzQ2NX0.lugWuqNI5VMy6hCn-y38-hi825pIHcUjOCAWCsMJz4c"
         );
 
-        let cachedCourses = [];
-
         async function loadCourses() {
-            const { data, error } = await client.from('courses').select('*');
+            const { data, error } = await client.from('courses').select('*').order('id', { ascending: true });
             if (error) {
                 console.log("Database fetch error:", error);
                 return;
             }
-            cachedCourses = data;
 
             document.getElementById('courseCards').innerHTML = data.map(course => `
                 <div class="course-card">
                     <div class="course-name">${course.name}</div>
-                    <div class="course-date-display">🗓️ ${course.course_date || 'TBD'}</div>
+                    <div class="course-date-display">🗓️ ${course.course_date}</div>
                     <div class="seat-number">${course.seats}</div>
-                    <div class="seat-text">Chairs</div>
+                    <div class="seat-text">Chairs Available</div>
                 </div>
             `).join('');
 
@@ -306,17 +301,18 @@
             const file = fileInput.files[0];
 
             if (!phoneNumber || !staffName || !staffNumber || !institution || !courseId) {
-                alert("Please fill in all textual fields.");
+                alert("Please fill in all text fields.");
                 return;
             }
 
+            // CRITICAL CHECK: Blocks submission before interacting with Supabase if empty
             if (!file) {
                 alert("Registration denied! You must upload an image or PDF document to register.");
                 return;
             }
 
             regBtn.disabled = true;
-            regBtn.innerText = "Uploading file and processing...";
+            regBtn.innerText = "Processing upload & registration...";
 
             try {
                 const { data: course, error: cError } = await client
@@ -326,24 +322,26 @@
                     .single();
 
                 if (cError || !course) {
-                    alert("Could not find the selected course.");
+                    alert("Selected course data could not be verified.");
                     return;
                 }
 
                 if (course.seats <= 0) {
-                    alert('No seats available for this course.');
+                    alert('No chairs left available for this training course.');
                     return;
                 }
 
+                // Generates random name for the upload to prevent filename duplication conflicts
                 const fileExtension = file.name.split('.').pop();
                 const uniqueFileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
 
+                // Uploads directly to your "registration-files" public storage bucket
                 const { data: uploadData, error: uploadError } = await client.storage
                     .from('registration-files')
                     .upload(uniqueFileName, file);
 
                 if (uploadError) {
-                    throw new Error("File upload failed: " + uploadError.message);
+                    throw new Error("File Upload Failed: " + uploadError.message);
                 }
 
                 const { data: publicUrlData } = client.storage
@@ -352,6 +350,7 @@
 
                 const finalFileUrl = publicUrlData.publicUrl;
 
+                // Inserts clean information matching your new SQL configuration schema 
                 const { error: insertError } = await client.from('registrations').insert({
                     phone_number: phoneNumber,
                     staff_name:   staffName,
@@ -362,15 +361,17 @@
                 });
 
                 if (insertError) {
-                    throw new Error("Database saving failed: " + insertError.message);
+                    throw new Error("Database Write Error: " + insertError.message);
                 }
 
+                // Subtracts 1 chair from available course seats counter
                 await client.from('courses')
                     .update({ seats: course.seats - 1 })
                     .eq('id', courseId);
 
-                alert('Registration successfully saved with document attachment!');
+                alert('Registration successfully verified and completed!');
 
+                // Clears fields out gracefully
                 document.getElementById('phoneNumber').value = '';
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
@@ -381,7 +382,7 @@
 
             } catch (err) {
                 console.error(err);
-                alert(err.message || "An unexpected error occurred.");
+                alert(err.message || "An unexpected processing issue occurred.");
             } finally {
                 regBtn.disabled = false;
                 regBtn.innerText = "Register Now";
