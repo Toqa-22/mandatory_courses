@@ -181,7 +181,7 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Student Name</th>
+                        <th>Phone Number</th>
                         <th>Staff Name</th>
                         <th>Staff Number</th>
                         <th>Institution</th>
@@ -222,11 +222,11 @@
                 return {
                     ...r,
                     course_name: targetCourse ? targetCourse.name : 'N/A',
-                    course_date: targetCourse ? targetCourse.course_date : 'N/A' // Reference the specific course date
+                    course_date: targetCourse ? targetCourse.course_date : 'N/A'
                 };
             });
 
-            // Stats aggregation
+            // Metrics Logic
             const totalRegs = allData.length;
             const courseCount = {};
             allData.forEach(r => {
@@ -253,7 +253,7 @@
 
             document.getElementById('stats').innerHTML = statsHTML;
 
-            // Render Table Rows
+            // Populate Table Content
             if (allData.length === 0) {
                 document.getElementById('tableBody').innerHTML = `
                     <tr><td colspan="7" class="empty">No registrations yet.</td></tr>
@@ -264,7 +264,7 @@
             document.getElementById('tableBody').innerHTML = allData.map((r, i) => `
                 <tr>
                     <td>${i + 1}</td>
-                    <td>${r.student_name}</td>
+                    <td>${r.phone_number || 'N/A'}</td>
                     <td>${r.staff_name}</td>
                     <td>${r.staff_number}</td>
                     <td>${r.institution}</td>
@@ -282,10 +282,10 @@
                 return;
             }
 
-            const headers = ['#', 'Student Name', 'Staff Name', 'Staff Number', 'Institution', 'Course', 'Course Date'];
+            const headers = ['#', 'Phone Number', 'Staff Name', 'Staff Number', 'Institution', 'Course', 'Course Date'];
             const rows = allData.map((r, i) => [
                 i + 1,
-                `"${r.student_name.replace(/"/g, '""')}"`,
+                `"${(r.phone_number || '').replace(/"/g, '""')}"`,
                 `"${r.staff_name.replace(/"/g, '""')}"`,
                 `"${r.staff_number.replace(/"/g, '""')}"`,
                 `"${r.institution.replace(/"/g, '""')}"`,
