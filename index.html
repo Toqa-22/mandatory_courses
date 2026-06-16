@@ -157,43 +157,31 @@
         </p>
 
         <div class="top-cards">
-
             <div id="courseCards"></div>
-
             <div class="date-card">
                 <h2>Date</h2>
                 <p id="todayDate"></p>
             </div>
-
         </div>
 
         <div class="form-card">
-
             <h2>Registration Form</h2>
-
             <div class="form-grid">
-
                 <input type="text" id="studentName" placeholder="Your Name">
                 <input type="text" id="staffName" placeholder="Staff Name">
                 <input type="text" id="staffNumber" placeholder="Staff Number">
                 <input type="text" id="institution" placeholder="Institution">
-
                 <select id="courseSelect"></select>
-
             </div>
-
             <button id="submitBtn" onclick="handleSubmit()">
                 Register Now
             </button>
-
         </div>
 
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <script>
-        const { createClient } = supabase;
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
         const client = createClient(
             "https://pqgkdnxdsybcfamwadrf.supabase.co",
@@ -232,7 +220,7 @@
 
         loadCourses();
 
-        async function handleSubmit() {
+        window.handleSubmit = async function () {
             const studentName = document.getElementById('studentName').value;
             const staffName = document.getElementById('staffName').value;
             const staffNumber = document.getElementById('staffNumber').value;
@@ -260,18 +248,15 @@
                 return;
             }
 
-            await client
-                .from('registrations')
-                .insert({
-                    student_name: studentName,
-                    staff_name: staffName,
-                    staff_number: staffNumber,
-                    institution: institution,
-                    course_id: courseId
-                });
+            await client.from('registrations').insert({
+                student_name: studentName,
+                staff_name: staffName,
+                staff_number: staffNumber,
+                institution: institution,
+                course_id: courseId
+            });
 
-            await client
-                .from('courses')
+            await client.from('courses')
                 .update({ seats: course.seats - 1 })
                 .eq('id', courseId);
 
