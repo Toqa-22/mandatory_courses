@@ -135,6 +135,33 @@
             border-color: #2563eb;
         }
 
+        /* File input custom wrapper styling */
+        .file-upload-wrapper {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-upload-wrapper label {
+            font-size: 15px;
+            color: #475569;
+            font-weight: bold;
+            padding-left: 5px;
+        }
+
+        .file-input {
+            padding: 12px;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            cursor: pointer;
+        }
+
+        .file-input:focus {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
         .btn-row {
             display: flex;
             gap: 15px;
@@ -191,11 +218,16 @@
         <div class="form-card">
             <h2>Registration Form</h2>
             <div class="form-grid">
-                <input type="text" id="studentName" placeholder="Your Name">
+                <input type="tel" id="phoneNumber" placeholder="Phone Number">
                 <input type="text" id="staffName" placeholder="Staff Name">
                 <input type="text" id="staffNumber" placeholder="Staff Number">
                 <input type="text" id="institution" placeholder="Institution">
                 <select id="courseSelect" onchange="updateSelectedDate()"></select>
+                
+                <div class="file-upload-wrapper">
+                    <label for="fileUpload">Upload Document / Image</label>
+                    <input type="file" id="fileUpload" class="file-input" accept="image/*, .pdf, .doc, .docx">
+                </div>
             </div>
             <div class="btn-row">
                 <button class="btn-register" onclick="handleSubmit()">Register Now</button>
@@ -225,7 +257,6 @@
 
             cachedCourses = data;
 
-            // Render course overview cards
             document.getElementById('courseCards').innerHTML = data.map(course => `
                 <div class="course-card">
                     <div class="course-name">${course.name}</div>
@@ -235,17 +266,14 @@
                 </div>
             `).join('');
 
-            // Populate the dropdown menu
             const selectableCourses = data.filter(c => c.seats > 0);
             document.getElementById('courseSelect').innerHTML = selectableCourses
                 .map(c => `<option value="${c.id}">${c.name} (${c.seats} chairs)</option>`)
                 .join('');
 
-            // Set the date placeholder initially based on the first course option
             updateSelectedDate();
         }
 
-        // Updates the standalone date card dynamically when selection switches
         window.updateSelectedDate = function() {
             const selectEl = document.getElementById('courseSelect');
             const selectedId = Number(selectEl.value);
@@ -261,16 +289,20 @@
         loadCourses();
 
         window.handleSubmit = async function () {
-            const studentName = document.getElementById('studentName').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
             const staffName   = document.getElementById('staffName').value;
             const staffNumber = document.getElementById('staffNumber').value;
             const institution = document.getElementById('institution').value;
             const courseId    = Number(document.getElementById('courseSelect').value);
+            const fileInput   = document.getElementById('fileUpload');
+            const attachedFile = fileInput.files[0];
 
-            if (!studentName || !staffName || !staffNumber || !institution || !courseId) {
-                alert("Please fill in all fields.");
+            if (!phoneNumber || !staffName || !staffNumber || !institution || !courseId) {
+                alert("Please fill in all textual fields.");
                 return;
             }
+
+            // Note: If you want to strictly require a file, check `if (!attachedFile)` here.
 
             const { data: course, error } = await client
                 .from('courses')
@@ -288,8 +320,9 @@
                 return;
             }
 
+            // Database insert payload prepared with phone_number instead of student_name
             await client.from('registrations').insert({
-                student_name: studentName,
+                phone_number: phoneNumber,
                 staff_name:   staffName,
                 staff_number: staffNumber,
                 institution:  institution,
@@ -302,10 +335,11 @@
 
             alert('Registration saved successfully!');
 
-            document.getElementById('studentName').value = '';
+            document.getElementById('phoneNumber').value = '';
             document.getElementById('staffName').value   = '';
             document.getElementById('staffNumber').value = '';
             document.getElementById('institution').value = '';
+            fileInput.value = ''; // Resets file selection
 
             loadCourses();
         }
