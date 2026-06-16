@@ -71,7 +71,7 @@
 
                 <div class="form-group-full">
                     <label for="institutionTypeSelect">Institution</label>
-                    <select id="institutionTypeSelect" onchange="handleInstitutionTypeChange()" required>
+                    <select id="institutionTypeSelect" required>
                         <option value="">-- Choose Institution Option --</option>
                         <option value="Ibra">Ibra</option>
                         <option value="Other">Other</option>
@@ -80,7 +80,7 @@
 
                 <div class="form-group-full hidden-element" id="departmentContainer">
                     <label for="departmentSelect">Select Department (Max 3 chairs per department)</label>
-                    <select id="departmentSelect" onchange="handleDepartmentChange()">
+                    <select id="departmentSelect">
                         <option value="">-- Choose Department --</option>
                         <option value="Emergency Department">Emergency Department</option>
                         <option value="Internal Medicine Department">Internal Medicine Department</option>
@@ -113,7 +113,7 @@
                 
                 <div class="form-group-full">
                     <label for="courseSelect">Choose Target Session Course</label>
-                    <select id="courseSelect" onchange="handleCourseSelectionChange()" required>
+                    <select id="courseSelect" required>
                         <option value="">-- Choose Course --</option>
                     </select>
                 </div>
@@ -122,7 +122,7 @@
             </div>
             
             <div class="btn-row">
-                <button class="btn-register" id="regBtn" onclick="handleSubmit()">Register Now</button>
+                <button class="btn-register" id="regBtn">Register Now</button>
             </div>
         </div>
     </div>
@@ -148,61 +148,29 @@
             "Obstetrics and Gynecology Ward", "Adult Intensive Care Unit (ICU)", "Special Care Baby Unit (SCBU)"
         ];
 
-        async function loadRegistrationFormConfig() {
-            const { data: courses, error: courseErr } = await client.from('courses').select('*').order('id', { ascending: true });
-            if (courseErr) return console.log("Database fetch error:", courseErr);
-            coursesCached = courses;
-
-            const { data: registers, error: regErr } = await client.from('registrations').select('course_id, institution_name_snapshot');
-            if (regErr) return console.log("Logs fetch error:", regErr);
-            registrationLogsCached = registers || [];
-
-            document.getElementById('courseCards').innerHTML = courses.map(course => {
-                const labels = Array.isArray(course.file_labels) ? course.file_labels.filter(l => l && l.trim() !== "") : [];
-                const reqCountText = labels.length > 0 ? `${labels.length} file(s)` : "None (No attachment required)";
-                
-                return `
-                    <div class="course-card">
-                        <div class="course-name">${course.name}</div>
-                        <div class="course-date-display">🗓️ ${course.course_date}</div>
-                        <div class="seat-number">${course.seats}</div>
-                        <div class="seat-text">Chairs Available</div>
-                        <div style="font-size:12px; margin-top:8px; color:#64748b; font-weight:bold;">Requires: ${reqCountText}</div>
-                    </div>
-                `;
-            }).join('');
-
-            const selectableCourses = courses.filter(c => c.seats > 0);
-            document.getElementById('courseSelect').innerHTML = '<option value="">-- Choose Course --</option>' + 
-                selectableCourses.map(c => `<option value="${c.id}">${c.name} (🗓️ ${c.course_date}) (${c.seats} chairs left)</option>`).join('');
-
-            handleCourseSelectionChange();
-        }
-
-        window.handleInstitutionTypeChange = function() {
-            const type = document.getElementById('institutionTypeSelect').value;
+        // Core visual switcher management engine
+        function renderInstitutionFields() {
+            const selectedType = document.getElementById('institutionTypeSelect').value;
             const deptContainer = document.getElementById('departmentContainer');
             const otherContainer = document.getElementById('otherInstitutionContainer');
             const courseId = Number(document.getElementById('courseSelect').value);
 
-            if (type === 'Ibra') {
+            if (selectedType === 'Ibra') {
                 deptContainer.classList.remove('hidden-element');
                 otherContainer.classList.add('hidden-element');
                 document.getElementById('otherInstitutionInput').value = '';
                 filterIbraDepartments(courseId);
-            } else if (type === 'Other') {
+            } else if (selectedType === 'Other') {
                 otherContainer.classList.remove('hidden-element');
                 deptContainer.classList.add('hidden-element');
                 document.getElementById('departmentSelect').value = '';
             } else {
                 deptContainer.classList.add('hidden-element');
                 otherContainer.classList.add('hidden-element');
+                document.getElementById('departmentSelect').value = '';
+                document.getElementById('otherInstitutionInput').value = '';
             }
-        };
-
-        window.handleDepartmentChange = function() {
-            handleCourseSelectionChange();
-        };
+        }
 
         function filterIbraDepartments(courseId) {
             const deptDropdown = document.getElementById('departmentSelect');
@@ -232,13 +200,12 @@
             deptDropdown.innerHTML = html;
         }
 
-        window.handleCourseSelectionChange = function() {
+        function handleCourseSelectionChange() {
             const courseId = Number(document.getElementById('courseSelect').value);
             const container = document.getElementById('dynamicUploadsContainer');
             
-            if (document.getElementById('institutionTypeSelect').value === 'Ibra') {
-                filterIbraDepartments(courseId);
-            }
+            // Sync Department seats counting dynamically when changing courses mid-form
+            renderInstitutionFields();
             
             if (!courseId) {
                 container.innerHTML = '<div style="color: #64748b; padding: 10px;">No available session course selected.</div>';
@@ -268,13 +235,45 @@
                     </div>
                 `;
             }).join('');
-        };
+        }
 
-        window.handleSubmit = async function () {
+        async function loadRegistrationFormConfig() {
+            const { data: courses, error: courseErr } = await client.from('courses').select('*').order('id', { ascending: true });
+            if (courseErr) return console.log("Database fetch error:", courseErr);
+            coursesCached = courses;
+
+            const { data: registers, error: regErr } = await client.from('registrations').select('course_id, institution_name_snapshot');
+            if (regErr) return console.log("Logs fetch error:", regErr);
+            registrationLogsCached = registers || [];
+
+            document.getElementById('courseCards').innerHTML = courses.map(course => {
+                const labels = Array.isArray(course.file_labels) ? course.file_labels.filter(l => l && l.trim() !== "") : [];
+                const reqCountText = labels.length > 0 ? `${labels.length} file(s)` : "None";
+                
+                return `
+                    <div class="course-card">
+                        <div class="course-name">${course.name}</div>
+                        <div class="course-date-display">🗓️ ${course.course_date}</div>
+                        <div class="seat-number">${course.seats}</div>
+                        <div class="seat-text">Chairs Available</div>
+                        <div style="font-size:12px; margin-top:8px; color:#64748b; font-weight:bold;">Requires: ${reqCountText}</div>
+                    </div>
+                `;
+            }).join('');
+
+            const selectableCourses = courses.filter(c => c.seats > 0);
+            document.getElementById('courseSelect').innerHTML = '<option value="">-- Choose Course --</option>' + 
+                selectableCourses.map(c => `<option value="${c.id}">${c.name} (🗓️ ${c.course_date}) (${c.seats} chairs left)</option>`).join('');
+
+            // Fire UI mapping sync state on init
+            handleCourseSelectionChange();
+        }
+
+        async function handleSubmit() {
             const regBtn = document.getElementById('regBtn');
-            const phoneNumber = document.getElementById('phoneNumber').value;
-            const staffName   = document.getElementById('staffName').value;
-            const staffNumber = document.getElementById('staffNumber').value;
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const staffName   = document.getElementById('staffName').value.trim();
+            const staffNumber = document.getElementById('staffNumber').value.trim();
             const designation = document.getElementById('designationSelect').value;
             const specialization = document.getElementById('specializationInput').value.trim();
             const courseId    = Number(document.getElementById('courseSelect').value);
@@ -365,6 +364,8 @@
                 await client.from('courses').update({ seats: currentCourse.seats - 1 }).eq('id', courseId);
 
                 alert('Registration verified and successfully logged!');
+                
+                // Complete clean resets
                 document.getElementById('phoneNumber').value = '';
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
@@ -375,19 +376,23 @@
                 document.getElementById('otherInstitutionInput').value = '';
                 document.getElementById('courseSelect').value = '';
                 
-                document.getElementById('departmentContainer').classList.add('hidden-element');
-                document.getElementById('otherInstitutionContainer').classList.add('hidden-element');
-                
                 await loadRegistrationFormConfig();
 
             } catch (err) {
                 alert(err.message || "An error occurred.");
-            } disable {
+            } finally {
                 regBtn.disabled = false;
                 regBtn.innerText = "Register Now";
             }
-        };
+        }
 
+        // Attach structural event listeners directly
+        document.getElementById('institutionTypeSelect').addEventListener('change', renderInstitutionFields);
+        document.getElementById('courseSelect').addEventListener('change', handleCourseSelectionChange);
+        document.getElementById('departmentSelect').addEventListener('change', renderInstitutionFields);
+        document.getElementById('regBtn').addEventListener('click', handleSubmit);
+
+        // Initial launch configuration fetch
         loadRegistrationFormConfig();
     </script>
 </body>
