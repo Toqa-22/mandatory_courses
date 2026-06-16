@@ -79,14 +79,21 @@
             coursesCached = data;
 
             document.getElementById('courseCards').innerHTML = data.map(course => {
-                const labels = Array.isArray(course.file_labels) ? course.file_labels : ["Required Document"];
+                // Read exact count of files needed
+                let count = 1;
+                if (course.required_files !== undefined) {
+                    count = course.required_files;
+                } else if (Array.isArray(course.file_labels)) {
+                    count = course.file_labels.length;
+                }
+
                 return `
                     <div class="course-card">
                         <div class="course-name">${course.name}</div>
                         <div class="course-date-display">🗓️ ${course.course_date}</div>
                         <div class="seat-number">${course.seats}</div>
                         <div class="seat-text">Chairs Available</div>
-                        <div style="font-size:12px; margin-top:8px; color:#64748b; font-weight:bold;">Requires: ${labels.length} file(s)</div>
+                        <div style="font-size:12px; margin-top:8px; color:#64748b; font-weight:bold;">Requires: ${count} file(s)</div>
                     </div>
                 `;
             }).join('');
@@ -109,16 +116,25 @@
                 return;
             }
 
-            const labels = Array.isArray(selectedCourse.file_labels) && selectedCourse.file_labels.length > 0 
-                ? selectedCourse.file_labels 
-                : ["Required Document"];
-            
-            container.innerHTML = labels.map((labelName, idx) => `
-                <div class="single-upload-box">
-                    <label>Upload Document #${idx + 1}: <span>${labelName} *</span></label>
-                    <input type="file" class="file-input custom-file-target" data-label="${labelName}" accept="image/*, .pdf" required>
-                </div>
-            `).join('');
+            // Fallback strategy to find exactly how many boxes to build
+            let count = 1;
+            if (selectedCourse.required_files !== undefined) {
+                count = selectedCourse.required_files;
+            } else if (Array.isArray(selectedCourse.file_labels)) {
+                count = selectedCourse.file_labels.length;
+            }
+
+            // Create a dedicated upload input element box loop matching the exact configuration number
+            let htmlPayload = '';
+            for (let i = 1; i <= count; i++) {
+                htmlPayload += `
+                    <div class="single-upload-box">
+                        <label>Upload Required Document #${i} <span>*</span></label>
+                        <input type="file" class="file-input custom-file-target" data-label="Document #${i}" accept="image/*, .pdf" required>
+                    </div>
+                `;
+            }
+            container.innerHTML = htmlPayload;
         };
 
         window.handleSubmit = async function () {
@@ -136,16 +152,11 @@
                 return;
             }
 
-            if (fileInputs.length === 0) {
-                alert("Error: No file requirements mapped for this configuration.");
-                return;
-            }
-
-            // Verify each input container element has a chosen item
+            // Ensure every displayed dynamic input element actually has a file chosen
             const uploadedUrls = [];
             for (let input of fileInputs) {
                 if (!input.files || input.files.length === 0) {
-                    alert(`Registration denied! You missed uploading: "${input.getAttribute('data-label')}"`);
+                    alert(`Registration denied! You missed uploading: ${input.getAttribute('data-label')}`);
                     return;
                 }
             }
@@ -156,6 +167,7 @@
             try {
                 const currentCourse = coursesCached.find(c => c.id === courseId);
 
+                // Run sequential loops to process files one by one cleanly into storage buckets
                 for (let i = 0; i < fileInputs.length; i++) {
                     const currentFile = fileInputs[i].files[0];
                     const fileExtension = currentFile.name.split('.').pop();
@@ -166,7 +178,7 @@
                         .from('registration-files')
                         .upload(uniqueFileName, currentFile);
 
-                    if (uploadError) throw new Error(`Upload Failed for "${fileInputs[i].getAttribute('data-label')}": ` + uploadError.message);
+                    if (uploadError) throw new Error(`Upload Failed for ${fileInputs[i].getAttribute('data-label')}: ` + uploadError.message);
 
                     const { data: publicUrlData } = client.storage
                         .from('registration-files')
@@ -175,6 +187,7 @@
                     uploadedUrls.push(publicUrlData.publicUrl);
                 }
 
+                // Insert user details along with the collection of secure public file URLs
                 const { error: insertError } = await client.from('registrations').insert({
                     phone_number: phoneNumber,
                     staff_name: staffName,
@@ -186,18 +199,20 @@
 
                 if (insertError) throw new Error("Database Write Error: " + insertError.message);
 
+                // Decrease the remaining course chair seats count by 1
                 await client.from('courses')
                     .update({ seats: currentCourse.seats - 1 })
                     .eq('id', courseId);
 
                 alert('Registration successfully verified and completed!');
 
+                // Clear input texts clean
                 document.getElementById('phoneNumber').value = '';
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
                 document.getElementById('institution').value = '';
                 
-                // Refresh data caches and safely redraw dynamic file upload elements cleanly
+                // Refresh data caches to properly re-render fresh layouts
                 await loadCourses();
 
             } catch (err) {
