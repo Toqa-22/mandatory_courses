@@ -285,7 +285,7 @@
             const headers = ['#', 'Phone Number', 'Staff Name', 'Staff Number', 'Institution', 'Course', 'Course Date'];
             const rows = allData.map((r, i) => [
                 i + 1,
-                `"${(r.phone_number || '').replace(/"/g, '""')}"`,
+                `"\t${(r.phone_number || '').replace(/"/g, '""')}"`, // Prefixed with a tab to ensure spreadsheet apps keep leading zeroes intact
                 `"${r.staff_name.replace(/"/g, '""')}"`,
                 `"${r.staff_number.replace(/"/g, '""')}"`,
                 `"${r.institution.replace(/"/g, '""')}"`,
