@@ -54,15 +54,17 @@
                 <input type="text" id="staffNumber" placeholder="Staff Number" required>
                 
                 <div class="form-group-full">
-                    <label for="institutionSelect">Select Your Institution (Only shows those with open quotas)</label>
-                    <select id="institutionSelect" required>
-                        <option value="">-- Choose Institution --</option>
+                    <label for="courseSelect">Choose Target Session Course</label>
+                    <select id="courseSelect" onchange="handleCourseSelectionChange()" required>
+                        <option value="">-- Choose Course --</option>
                     </select>
                 </div>
 
                 <div class="form-group-full">
-                    <label for="courseSelect">Choose Target Session Course</label>
-                    <select id="courseSelect" onchange="renderDynamicUploadBoxes()" required></select>
+                    <label for="institutionSelect">Select Your Institution (Only shows those with open quotas for this course)</label>
+                    <select id="institutionSelect" required>
+                        <option value="">-- Choose Institution --</option>
+                    </select>
                 </div>
                 
                 <div class="dynamic-uploads-wrapper" id="dynamicUploadsContainer"></div>
@@ -83,7 +85,7 @@
         );
 
         let coursesCached = [];
-        let institutionsCached = [];
+        let quotasMapCached = [];
 
         async function loadRegistrationFormConfig() {
             // Fetch Course Data
@@ -91,10 +93,13 @@
             if (courseErr) return console.log("Database fetch error:", courseErr);
             coursesCached = courses;
 
-            // Fetch Institution Pool
-            const { data: institutions, error: instErr } = await client.from('institutions').select('*').order('name', { ascending: true });
-            if (instErr) return console.log("Institution pool fetch error:", instErr);
-            institutionsCached = institutions;
+            // Fetch course-to-institution breakdown allocations matrix maps data
+            const { data: quotas, error: quotaErr } = await client.from('course_institutions').select(`
+                id, course_id, institution_id, max_slots, registered_count,
+                institutions(name)
+            `);
+            if (quotaErr) return console.log("Quota configurations lookup mapping tracking view error:", quotaErr);
+            quotasMapCached = quotas || [];
 
             // Render visual cards setup overview
             document.getElementById('courseCards').innerHTML = courses.map(course => {
@@ -112,32 +117,38 @@
 
             // Render Select Dropdown for open selectable courses
             const selectableCourses = courses.filter(c => c.seats > 0);
-            document.getElementById('courseSelect').innerHTML = selectableCourses
-                .map(c => `<option value="${c.id}">${c.name} (${c.seats} chairs left)</option>`)
-                .join('');
+            document.getElementById('courseSelect').innerHTML = '<option value="">-- Choose Course --</option>' + 
+                selectableCourses.map(c => `<option value="${c.id}">${c.name} (${c.seats} chairs left)</option>`).join('');
 
-            // CRITICAL LOGIC: Filter choices down dynamically. 
-            // Only displays institutions where current signups are strictly less than max allotted capacity threshold.
-            const openInstitutions = institutions.filter(i => i.registered_count < i.max_slots);
-            
-            const instDropdown = document.getElementById('institutionSelect');
-            instDropdown.innerHTML = '<option value="">-- Choose Institution --</option>' + 
-                openInstitutions.map(i => `<option value="${i.id}">${i.name} (${i.max_slots - i.registered_count} remaining slots)</option>`).join('');
-
-            renderDynamicUploadBoxes();
+            // Clean form upload panels if resetting
+            handleCourseSelectionChange();
         }
 
-        window.renderDynamicUploadBoxes = function() {
-            const selectedId = Number(document.getElementById('courseSelect').value);
-            const selectedCourse = coursesCached.find(c => c.id === selectedId);
-            const container = document.getElementById('dynamicUploadsContainer');
+        window.handleCourseSelectionChange = function() {
+            const courseId = Number(document.getElementById('courseSelect').value);
+            const instDropdown = document.getElementById('institutionSelect');
             
-            if (!selectedCourse) {
-                container.innerHTML = '<div style="color: #64748b; padding: 10px;">No available session course selected.</div>';
+            if (!courseId) {
+                instDropdown.innerHTML = '<option value="">-- Choose Institution --</option>';
+                document.getElementById('dynamicUploadsContainer').innerHTML = '<div style="color: #64748b; padding: 10px;">No available session course selected.</div>';
                 return;
             }
 
-            const labels = Array.isArray(selectedCourse.file_labels) && selectedCourse.file_labels.length > 0 
+            // 1. Filter allocated rules mapping belonging explicitly to this single course scope context
+            const courseSpecificQuotas = quotasMapCached.filter(q => q.course_id === courseId && q.registered_count < q.max_slots);
+            
+            instDropdown.innerHTML = '<option value="">-- Choose Institution --</option>' + 
+                courseSpecificQuotas.map(q => {
+                    const remaining = q.max_slots - q.registered_count;
+                    const name = q.institutions?.name || 'Unknown Institution';
+                    return `<option value="${q.institution_id}" data-quota-id="${q.id}">${name} (${remaining} slots available)</option>`;
+                }).join('');
+
+            // 2. Render files boxes setup
+            const selectedCourse = coursesCached.find(c => c.id === courseId);
+            const container = document.getElementById('dynamicUploadsContainer');
+            
+            const labels = selectedCourse && Array.isArray(selectedCourse.file_labels) && selectedCourse.file_labels.length > 0 
                 ? selectedCourse.file_labels 
                 : ["Required Document"];
             
@@ -154,17 +165,20 @@
             const phoneNumber = document.getElementById('phoneNumber').value;
             const staffName   = document.getElementById('staffName').value;
             const staffNumber = document.getElementById('staffNumber').value;
-            const institutionId = document.getElementById('institutionSelect').value;
+            const instDropdown = document.getElementById('institutionSelect');
+            const institutionId = instDropdown.value;
             const courseId    = Number(document.getElementById('courseSelect').value);
+            
+            const selectedOption = instDropdown.options[instDropdown.selectedIndex];
+            const ruleMappingId = selectedOption ? Number(selectedOption.getAttribute('data-quota-id')) : null;
             
             const fileInputs  = document.querySelectorAll('.custom-file-target');
 
-            if (!phoneNumber || !staffName || !staffNumber || !institutionId || !courseId) {
+            if (!phoneNumber || !staffName || !staffNumber || !institutionId || !courseId || !ruleMappingId) {
                 alert("Please complete all text fields and drop down selections.");
                 return;
             }
 
-            // Client checking verification for missing uploaded items
             for (let input of fileInputs) {
                 if (!input.files || input.files.length === 0) {
                     alert(`Registration denied! Missing file target object: "${input.getAttribute('data-label')}"`);
@@ -177,11 +191,16 @@
 
             try {
                 const currentCourse = coursesCached.find(c => c.id === courseId);
-                const currentInst = institutionsCached.find(i => i.id === Number(institutionId));
+                
+                // Fetch direct real-time rule configuration status record safety validation checks
+                const { data: realTimeRule, error: checkErr } = await client.from('course_institutions')
+                    .select('id, max_slots, registered_count, institutions(name)')
+                    .eq('id', ruleMappingId)
+                    .single();
 
-                // Extra safety re-check for structural boundaries
-                if (!currentInst || currentInst.registered_count >= currentInst.max_slots) {
-                    throw new Error("This institution structural allotment allocation has just reached full bounds limit! Choose another.");
+                if (checkErr || !realTimeRule) throw new Error("Could not verify your institution quota settings configuration rule layout.");
+                if (realTimeRule.registered_count >= realTimeRule.max_slots) {
+                    throw new Error(`The allocation quota pool context for ${realTimeRule.institutions?.name || 'your institution'} has just reached max limits boundaries.`);
                 }
 
                 const uploadedUrls = [];
@@ -209,8 +228,8 @@
                     phone_number: phoneNumber,
                     staff_name: staffName,
                     staff_number: staffNumber,
-                    institution_id: currentInst.id,
-                    institution_name_snapshot: currentInst.name, // saves textual historical value snapshot string
+                    institution_id: Number(institutionId),
+                    institution_name_snapshot: realTimeRule.institutions?.name || "Institution Scope Context",
                     course_id: courseId,
                     file_urls: uploadedUrls
                 });
@@ -222,17 +241,17 @@
                     .update({ seats: currentCourse.seats - 1 })
                     .eq('id', courseId);
 
-                // Increment institution count utilization indicator +1
-                await client.from('institutions')
-                    .update({ registered_count: currentInst.registered_count + 1 })
-                    .eq('id', currentInst.id);
+                // Increment intersection mapping room quota limit metrics row directly!
+                await client.from('course_institutions')
+                    .update({ registered_count: realTimeRule.registered_count + 1 })
+                    .eq('id', ruleMappingId);
 
                 alert('Registration verified and successfully logged!');
 
                 document.getElementById('phoneNumber').value = '';
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
-                document.getElementById('institutionSelect').value = '';
+                document.getElementById('courseSelect').value = '';
                 
                 await loadRegistrationFormConfig();
 
