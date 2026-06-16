@@ -53,8 +53,7 @@
             justify-content: center;
         }
 
-        .course-card,
-        .date-card {
+        .course-card {
             width: 220px;
             background: white;
             border-radius: 25px;
@@ -64,8 +63,7 @@
             transition: .3s;
         }
 
-        .course-card:hover,
-        .date-card:hover {
+        .course-card:hover {
             transform: translateY(-8px);
         }
 
@@ -91,17 +89,6 @@
         .seat-text {
             color: #64748b;
             font-size: 18px;
-        }
-
-        .date-card h2 {
-            color: #3b2602;
-            margin-bottom: 20px;
-        }
-
-        .date-card p {
-            font-size: 22px;
-            color: #2563eb;
-            font-weight: bold;
         }
 
         .form-card {
@@ -135,7 +122,6 @@
             border-color: #2563eb;
         }
 
-        /* File input custom wrapper styling */
         .file-upload-wrapper {
             grid-column: 1 / -1;
             display: flex;
@@ -209,10 +195,6 @@
 
         <div class="top-cards">
             <div id="courseCards"></div>
-            <div class="date-card">
-                <h2>Selected Course Date</h2>
-                <p id="todayDate">Select a course...</p>
-            </div>
         </div>
 
         <div class="form-card">
@@ -222,7 +204,7 @@
                 <input type="text" id="staffName" placeholder="Staff Name">
                 <input type="text" id="staffNumber" placeholder="Staff Number">
                 <input type="text" id="institution" placeholder="Institution">
-                <select id="courseSelect" onchange="updateSelectedDate()"></select>
+                <select id="courseSelect"></select>
                 
                 <div class="file-upload-wrapper">
                     <label for="fileUpload">Upload Document / Image</label>
@@ -270,20 +252,6 @@
             document.getElementById('courseSelect').innerHTML = selectableCourses
                 .map(c => `<option value="${c.id}">${c.name} (${c.seats} chairs)</option>`)
                 .join('');
-
-            updateSelectedDate();
-        }
-
-        window.updateSelectedDate = function() {
-            const selectEl = document.getElementById('courseSelect');
-            const selectedId = Number(selectEl.value);
-            const chosenCourse = cachedCourses.find(c => c.id === selectedId);
-            
-            if (chosenCourse) {
-                document.getElementById('todayDate').innerHTML = chosenCourse.course_date || 'TBD';
-            } else {
-                document.getElementById('todayDate').innerHTML = 'N/A';
-            }
         }
 
         loadCourses();
@@ -295,14 +263,11 @@
             const institution = document.getElementById('institution').value;
             const courseId    = Number(document.getElementById('courseSelect').value);
             const fileInput   = document.getElementById('fileUpload');
-            const attachedFile = fileInput.files[0];
 
             if (!phoneNumber || !staffName || !staffNumber || !institution || !courseId) {
                 alert("Please fill in all textual fields.");
                 return;
             }
-
-            // Note: If you want to strictly require a file, check `if (!attachedFile)` here.
 
             const { data: course, error } = await client
                 .from('courses')
@@ -320,7 +285,6 @@
                 return;
             }
 
-            // Database insert payload prepared with phone_number instead of student_name
             await client.from('registrations').insert({
                 phone_number: phoneNumber,
                 staff_name:   staffName,
@@ -339,7 +303,7 @@
             document.getElementById('staffName').value   = '';
             document.getElementById('staffNumber').value = '';
             document.getElementById('institution').value = '';
-            fileInput.value = ''; // Resets file selection
+            fileInput.value = '';
 
             loadCourses();
         }
