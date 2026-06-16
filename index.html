@@ -171,24 +171,20 @@
 
             <h2>Registration Form</h2>
 
-            <form id="registrationForm">
+            <div class="form-grid">
 
-                <div class="form-grid">
+                <input type="text" id="studentName" placeholder="Your Name">
+                <input type="text" id="staffName" placeholder="Staff Name">
+                <input type="text" id="staffNumber" placeholder="Staff Number">
+                <input type="text" id="institution" placeholder="Institution">
 
-                    <input type="text" id="studentName" placeholder="Your Name" required>
-                    <input type="text" id="staffName" placeholder="Staff Name" required>
-                    <input type="text" id="staffNumber" placeholder="Staff Number" required>
-                    <input type="text" id="institution" placeholder="Institution" required>
+                <select id="courseSelect"></select>
 
-                    <select id="courseSelect" required></select>
+            </div>
 
-                </div>
-
-                <button type="submit">
-                    Register Now
-                </button>
-
-            </form>
+            <button id="submitBtn" onclick="handleSubmit()">
+                Register Now
+            </button>
 
         </div>
 
@@ -197,15 +193,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        // Connect to your live database safely
-        const supabase = window.supabase.createClient(
+        const { createClient } = supabase;
+
+        const client = createClient(
             "https://pqgkdnxdsybcfamwadrf.supabase.co",
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZ2tkbnhkc3liY2ZhbXdhZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MzE0NjUsImV4cCI6MjA5NzEwNzQ2NX0.lugWuqNI5VMy6hCn-y38-hi825pIHcUjOCAWCsMJz4c"
         );
 
-        // Function to load elements from database
         async function loadCourses() {
-            const { data, error } = await supabase
+            const { data, error } = await client
                 .from('courses')
                 .select('*');
 
@@ -214,7 +210,6 @@
                 return;
             }
 
-            // Display visual choice cards
             document.getElementById('courseCards').innerHTML = data.map(course => `
                 <div class="course-card">
                     <div class="course-name">${course.name}</div>
@@ -223,10 +218,8 @@
                 </div>
             `).join('');
 
-            // Set current calendar date
             document.getElementById('todayDate').innerHTML = new Date().toLocaleDateString();
 
-            // Populate the dropdown list choice select menu
             document.getElementById('courseSelect').innerHTML = data
                 .filter(c => c.seats > 0)
                 .map(c => `
@@ -237,16 +230,21 @@
                 .join('');
         }
 
-        // Initialize execution on page view load
         loadCourses();
 
-        // Handle user signup submission transactions
-        document.getElementById('registrationForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-
+        async function handleSubmit() {
+            const studentName = document.getElementById('studentName').value;
+            const staffName = document.getElementById('staffName').value;
+            const staffNumber = document.getElementById('staffNumber').value;
+            const institution = document.getElementById('institution').value;
             const courseId = Number(document.getElementById('courseSelect').value);
 
-            const { data: course, error } = await supabase
+            if (!studentName || !staffName || !staffNumber || !institution || !courseId) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            const { data: course, error } = await client
                 .from('courses')
                 .select('*')
                 .eq('id', courseId)
@@ -262,28 +260,30 @@
                 return;
             }
 
-            // Insert details log object registry entry row securely
-            await supabase
+            await client
                 .from('registrations')
                 .insert({
-                    student_name: document.getElementById('studentName').value,
-                    staff_name: document.getElementById('staffName').value,
-                    staff_number: document.getElementById('staffNumber').value,
-                    institution: document.getElementById('institution').value,
+                    student_name: studentName,
+                    staff_name: staffName,
+                    staff_number: staffNumber,
+                    institution: institution,
                     course_id: courseId
                 });
 
-            // Decrease current structural unit limit counter metric integer variable by 1
-            await supabase
+            await client
                 .from('courses')
                 .update({ seats: course.seats - 1 })
                 .eq('id', courseId);
 
             alert('Registration saved successfully.');
 
-            this.reset();
+            document.getElementById('studentName').value = '';
+            document.getElementById('staffName').value = '';
+            document.getElementById('staffNumber').value = '';
+            document.getElementById('institution').value = '';
+
             loadCourses();
-        });
+        }
     </script>
 
 </body>
