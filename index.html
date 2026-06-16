@@ -141,6 +141,8 @@
             background: #f8fafc;
             border: 2px dashed #cbd5e1;
             cursor: pointer;
+            width: 100%;
+            border-radius: 15px;
         }
 
         .file-input:focus {
@@ -165,7 +167,12 @@
             cursor: pointer;
         }
 
-        .btn-register:hover {
+        .btn-register:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .btn-register:hover:not(:disabled) {
             opacity: .9;
         }
 
@@ -207,12 +214,12 @@
                 <select id="courseSelect"></select>
                 
                 <div class="file-upload-wrapper">
-                    <label for="fileUpload">Upload Document / Image</label>
-                    <input type="file" id="fileUpload" class="file-input" accept="image/*, .pdf, .doc, .docx">
+                    <label for="fileUpload">Upload Document / Image (Required) *</label>
+                    <input type="file" id="fileUpload" class="file-input" accept="image/*, .pdf">
                 </div>
             </div>
             <div class="btn-row">
-                <button class="btn-register" onclick="handleSubmit()">Register Now</button>
+                <button class="btn-register" id="regBtn" onclick="handleSubmit()">Register Now</button>
                 <button class="btn-view" onclick="window.location.href='registrations.html'">View Registrations</button>
             </div>
         </div>
@@ -231,12 +238,10 @@
 
         async function loadCourses() {
             const { data, error } = await client.from('courses').select('*');
-
             if (error) {
                 console.log("Database fetch error:", error);
                 return;
             }
-
             cachedCourses = data;
 
             document.getElementById('courseCards').innerHTML = data.map(course => `
@@ -257,55 +262,101 @@
         loadCourses();
 
         window.handleSubmit = async function () {
+            const regBtn = document.getElementById('regBtn');
             const phoneNumber = document.getElementById('phoneNumber').value;
             const staffName   = document.getElementById('staffName').value;
             const staffNumber = document.getElementById('staffNumber').value;
             const institution = document.getElementById('institution').value;
             const courseId    = Number(document.getElementById('courseSelect').value);
             const fileInput   = document.getElementById('fileUpload');
+            const file = fileInput.files[0];
 
+            // STRICT FRONTEND VALIDATION
             if (!phoneNumber || !staffName || !staffNumber || !institution || !courseId) {
                 alert("Please fill in all textual fields.");
                 return;
             }
 
-            const { data: course, error } = await client
-                .from('courses')
-                .select('*')
-                .eq('id', courseId)
-                .single();
-
-            if (error || !course) {
-                alert("Could not find the selected course.");
+            // CRITICAL CHECK: Block submission if file is missing
+            if (!file) {
+                alert("Registration denied! You must upload an image or PDF document to register.");
                 return;
             }
 
-            if (course.seats <= 0) {
-                alert('No seats available for this course.');
-                return;
+            regBtn.disabled = true;
+            regBtn.innerText = "Uploading file and processing...";
+
+            try {
+                const { data: course, error: cError } = await client
+                    .from('courses')
+                    .select('*')
+                    .eq('id', courseId)
+                    .single();
+
+                if (cError || !course) {
+                    alert("Could not find the selected course.");
+                    return;
+                }
+
+                if (course.seats <= 0) {
+                    alert('No seats available for this course.');
+                    return;
+                }
+
+                // Upload to Storage Bucket (Ensure bucket "registration-files" is public in Supabase dashboard)
+                const fileExtension = file.name.split('.').pop();
+                const uniqueFileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
+
+                const { data: uploadData, error: uploadError } = await client.storage
+                    .from('registration-files')
+                    .upload(uniqueFileName, file);
+
+                if (uploadError) {
+                    throw new Error("File upload failed: " + uploadError.message);
+                }
+
+                const { data: publicUrlData } = client.storage
+                    .from('registration-files')
+                    .getPublicUrl(uniqueFileName);
+
+                const finalFileUrl = publicUrlData.publicUrl;
+
+                // Save to database
+                const { error: insertError } = await client.from('registrations').insert({
+                    phone_number: phoneNumber,
+                    staff_name:   staffName,
+                    staff_number: staffNumber,
+                    institution:  institution,
+                    course_id:    courseId,
+                    file_url:     finalFileUrl // Saves the link securely
+                });
+
+                if (insertError) {
+                    throw new Error("Database saving failed: " + insertError.message);
+                }
+
+                await client.from('courses')
+                    .update({ seats: course.seats - 1 })
+                    .eq('id', courseId);
+
+                alert('Registration successfully saved with document attachment!');
+
+                // Reset Form
+                document.getElementById('phoneNumber').value = '';
+                document.getElementById('staffName').value   = '';
+                document.getElementById('staffNumber').value = '';
+                document.getElementById('institution').value = '';
+                fileInput.value = '';
+
+                loadCourses();
+
+            } catch (err) {
+                console.error(err);
+                alert(err.message || "An unexpected error occurred.");
+            } finally {
+                regBtn.disabled = false;
+                regBtn.innerText = "Register Now";
             }
-
-            await client.from('registrations').insert({
-                phone_number: phoneNumber,
-                staff_name:   staffName,
-                staff_number: staffNumber,
-                institution:  institution,
-                course_id:    courseId
-            });
-
-            await client.from('courses')
-                .update({ seats: course.seats - 1 })
-                .eq('id', courseId);
-
-            alert('Registration saved successfully!');
-
-            document.getElementById('phoneNumber').value = '';
-            document.getElementById('staffName').value   = '';
-            document.getElementById('staffNumber').value = '';
-            document.getElementById('institution').value = '';
-            fileInput.value = '';
-
-            loadCourses();
         }
     </script>
 
