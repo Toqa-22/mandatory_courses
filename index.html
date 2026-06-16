@@ -105,13 +105,14 @@
             const container = document.getElementById('dynamicUploadsContainer');
             
             if (!selectedCourse) {
-                container.innerHTML = '';
+                container.innerHTML = '<div style="color: #64748b; padding: 10px;">No available course chosen.</div>';
                 return;
             }
 
-            const labels = Array.isArray(selectedCourse.file_labels) ? selectedCourse.file_labels : ["Required Document"];
+            const labels = Array.isArray(selectedCourse.file_labels) && selectedCourse.file_labels.length > 0 
+                ? selectedCourse.file_labels 
+                : ["Required Document"];
             
-            // Generate a dedicated upload element for each specific item text title
             container.innerHTML = labels.map((labelName, idx) => `
                 <div class="single-upload-box">
                     <label>Upload Document #${idx + 1}: <span>${labelName} *</span></label>
@@ -135,7 +136,12 @@
                 return;
             }
 
-            // Verify each single separate upload input contains a selected document
+            if (fileInputs.length === 0) {
+                alert("Error: No file requirements mapped for this configuration.");
+                return;
+            }
+
+            // Verify each input container element has a chosen item
             const uploadedUrls = [];
             for (let input of fileInputs) {
                 if (!input.files || input.files.length === 0) {
@@ -145,7 +151,7 @@
             }
 
             regBtn.disabled = true;
-            regBtn.innerText = "Uploading required files sequentially...";
+            regBtn.innerText = "Uploading files sequentially...";
 
             try {
                 const currentCourse = coursesCached.find(c => c.id === courseId);
@@ -191,7 +197,8 @@
                 document.getElementById('staffNumber').value = '';
                 document.getElementById('institution').value = '';
                 
-                loadCourses();
+                // Refresh data caches and safely redraw dynamic file upload elements cleanly
+                await loadCourses();
 
             } catch (err) {
                 console.error(err);
