@@ -1,212 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mandatory Course Registration</title>
-
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            background: #f4f7fc;
-            min-height: 100vh;
-            padding: 40px 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: auto;
-        }
-
-        .title {
-            text-align: center;
-            font-size: 50px;
-            color: #0f172a;
-            margin-bottom: 15px;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #64748b;
-            margin-bottom: 40px;
-        }
-
-        .top-cards {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 25px;
-            justify-content: center;
-            margin-bottom: 40px;
-        }
-
-        #courseCards {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 25px;
-            justify-content: center;
-        }
-
-        .course-card {
-            width: 220px;
-            background: white;
-            border-radius: 25px;
-            padding: 35px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
-            transition: .3s;
-        }
-
-        .course-card:hover {
-            transform: translateY(-8px);
-        }
-
-        .course-name {
-            font-size: 30px;
-            color: #2563eb;
-            margin-bottom: 10px;
-        }
-
-        .course-date-display {
-            font-size: 14px;
-            color: #7c3aed;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-
-        .seat-number {
-            font-size: 55px;
-            font-weight: bold;
-            color: #0f172a;
-        }
-
-        .seat-text {
-            color: #64748b;
-            font-size: 18px;
-        }
-
-        .form-card {
-            background: white;
-            padding: 40px;
-            border-radius: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
-        }
-
-        .form-card h2 {
-            margin-bottom: 30px;
-            color: #0f172a;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 15px;
-            font-size: 16px;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: #2563eb;
-        }
-
-        .file-upload-wrapper {
-            grid-column: 1 / -1;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            background: #f8fafc;
-            border: 2px dashed #cbd5e1;
-            padding: 25px;
-            border-radius: 20px;
-        }
-
-        .file-upload-wrapper label {
-            font-size: 16px;
-            color: #0f172a;
-            font-weight: bold;
-        }
-
-        .example-preview-container {
-            margin-top: 5px;
-            margin-bottom: 10px;
-        }
-
-        .example-preview-container span {
-            display: block;
-            font-size: 13px;
-            color: #64748b;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-
-        .example-img {
-            max-width: 100%;
-            width: 280px;
-            height: auto;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            background: white;
-        }
-
-        .file-input {
-            padding: 12px;
-            background: white;
-            border: 1px solid #cbd5e1;
-            cursor: pointer;
-            width: 100%;
-            border-radius: 12px;
-        }
-
-        .file-input:focus {
-            border-color: #2563eb;
-            background: #eff6ff;
-        }
-
-        .btn-row {
-            display: flex;
-            margin-top: 30px;
-        }
-
-        .btn-register {
-            flex: 1;
-            padding: 18px;
-            background: linear-gradient(90deg, #2563eb, #7c3aed);
-            border: none;
-            color: white;
-            font-size: 18px;
-            border-radius: 15px;
-            cursor: pointer;
-        }
-
-        .btn-register:disabled {
-            background: #cbd5e1;
-            cursor: not-allowed;
-        }
-
-        .btn-register:hover:not(:disabled) {
-            opacity: .9;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #f4f7fc; min-height: 100vh; padding: 40px 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        .title { text-align: center; font-size: 50px; color: #0f172a; margin-bottom: 15px; }
+        .subtitle { text-align: center; color: #64748b; margin-bottom: 40px; }
+        .top-cards { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; margin-bottom: 40px; }
+        #courseCards { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; }
+        .course-card { width: 220px; background: white; border-radius: 25px; padding: 35px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, .08); transition: .3s; }
+        .course-card:hover { transform: translateY(-8px); }
+        .course-name { font-size: 30px; color: #2563eb; margin-bottom: 10px; }
+        .course-date-display { font-size: 14px; color: #7c3aed; margin-bottom: 15px; font-weight: bold; }
+        .seat-number { font-size: 55px; font-weight: bold; color: #0f172a; }
+        .seat-text { color: #64748b; font-size: 18px; }
+        .form-card { background: white; padding: 40px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, .08); }
+        .form-card h2 { margin-bottom: 30px; color: #0f172a; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        input, select { width: 100%; padding: 16px; border: 1px solid #d1d5db; border-radius: 15px; font-size: 16px; }
+        input:focus, select:focus { outline: none; border-color: #2563eb; }
+        .file-upload-wrapper { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 12px; background: #f8fafc; border: 2px dashed #cbd5e1; padding: 25px; border-radius: 20px; }
+        .file-upload-wrapper label { font-size: 16px; color: #0f172a; font-weight: bold; }
+        .file-hint { color: #e11d48; font-weight: bold; font-size: 15px; background: #fff1f2; padding: 8px 15px; border-radius: 8px; display: inline-block; width: fit-content;}
+        .file-input { padding: 12px; background: white; border: 1px solid #cbd5e1; cursor: pointer; width: 100%; border-radius: 12px; }
+        .btn-row { display: flex; margin-top: 30px; }
+        .btn-register { flex: 1; padding: 18px; background: linear-gradient(90deg, #2563eb, #7c3aed); border: none; color: white; font-size: 18px; border-radius: 15px; cursor: pointer; }
+        .btn-register:disabled { background: #cbd5e1; cursor: not-allowed; }
     </style>
 </head>
-
 <body>
 
     <div class="container">
-
         <h1 class="title">Mandatory Course</h1>
         <p class="subtitle">Please fill the form below to register.</p>
 
@@ -221,24 +49,18 @@
                 <input type="text" id="staffName" placeholder="Staff Name">
                 <input type="text" id="staffNumber" placeholder="Staff Number">
                 <input type="text" id="institution" placeholder="Institution">
-                <select id="courseSelect"></select>
+                <select id="courseSelect" onchange="updateFileRequirementHint()"></select>
                 
                 <div class="file-upload-wrapper">
-                    <label for="fileUpload">Upload Document / Image (Required) *</label>
-                    
-                    <div class="example-preview-container">
-                        <span>Required Upload Format Example:</span>
-                        <img src="imj.png" alt="Upload Requirement Example" class="example-img">
-                    </div>
-
-                    <input type="file" id="fileUpload" class="file-input" accept="image/*, .pdf">
+                    <label for="fileUpload">Upload Documents / Images *</label>
+                    <div class="file-hint" id="fileHint">Select a course to see required file count.</div>
+                    <input type="file" id="fileUpload" class="file-input" accept="image/*, .pdf" multiple>
                 </div>
             </div>
             <div class="btn-row">
                 <button class="btn-register" id="regBtn" onclick="handleSubmit()">Register Now</button>
             </div>
         </div>
-
     </div>
 
     <script type="module">
@@ -249,12 +71,13 @@
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZ2tkbnhkc3liY2ZhbXdhZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MzE0NjUsImV4cCI6MjA5NzEwNzQ2NX0.lugWuqNI5VMy6hCn-y38-hi825pIHcUjOCAWCsMJz4c"
         );
 
+        let coursesCached = [];
+
         async function loadCourses() {
             const { data, error } = await client.from('courses').select('*').order('id', { ascending: true });
-            if (error) {
-                console.log("Database fetch error:", error);
-                return;
-            }
+            if (error) return console.log("Database fetch error:", error);
+
+            coursesCached = data;
 
             document.getElementById('courseCards').innerHTML = data.map(course => `
                 <div class="course-card">
@@ -262,6 +85,7 @@
                     <div class="course-date-display">🗓️ ${course.course_date}</div>
                     <div class="seat-number">${course.seats}</div>
                     <div class="seat-text">Chairs Available</div>
+                    <div style="font-size:12px; margin-top:5px; color:#64748b;">Requires ${course.required_files || 1} file(s)</div>
                 </div>
             `).join('');
 
@@ -269,9 +93,18 @@
             document.getElementById('courseSelect').innerHTML = selectableCourses
                 .map(c => `<option value="${c.id}">${c.name} (${c.seats} chairs)</option>`)
                 .join('');
+
+            updateFileRequirementHint();
         }
 
-        loadCourses();
+        window.updateFileRequirementHint = function() {
+            const selectedId = Number(document.getElementById('courseSelect').value);
+            const selectedCourse = coursesCached.find(c => c.id === selectedId);
+            if (selectedCourse) {
+                const reqCount = selectedCourse.required_files || 1;
+                document.getElementById('fileHint').innerText = `⚠️ You must choose and upload exactly ${reqCount} separate file attachment(s) for this course selection.`;
+            }
+        };
 
         window.handleSubmit = async function () {
             const regBtn = document.getElementById('regBtn');
@@ -281,80 +114,63 @@
             const institution = document.getElementById('institution').value;
             const courseId    = Number(document.getElementById('courseSelect').value);
             const fileInput   = document.getElementById('fileUpload');
-            const file = fileInput.files[0];
+            const files       = fileInput.files;
 
             if (!phoneNumber || !staffName || !staffNumber || !institution || !courseId) {
                 alert("Please fill in all text fields.");
                 return;
             }
 
-            // CRITICAL CHECK: Blocks submission before interacting with Supabase if empty
-            if (!file) {
-                alert("Registration denied! You must upload an image or PDF document to register.");
+            const currentCourse = coursesCached.find(c => c.id === courseId);
+            const targetRequiredCount = currentCourse ? (currentCourse.required_files || 1) : 1;
+
+            if (files.length !== targetRequiredCount) {
+                alert(`Registration denied! This chosen course configuration requires exactly ${targetRequiredCount} files submitted. You selected ${files.length}.`);
                 return;
             }
 
             regBtn.disabled = true;
-            regBtn.innerText = "Processing upload & registration...";
+            regBtn.innerText = "Processing batch file upload...";
 
             try {
-                const { data: course, error: cError } = await client
-                    .from('courses')
-                    .select('*')
-                    .eq('id', courseId)
-                    .single();
+                const uploadedUrls = [];
 
-                if (cError || !course) {
-                    alert("Selected course data could not be verified.");
-                    return;
+                for (let i = 0; i < files.length; i++) {
+                    const currentFile = files[i];
+                    const fileExtension = currentFile.name.split('.').pop();
+                    const uniqueFileName = `${Date.now()}_file${i}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
+
+                    const { data: uploadData, error: uploadError } = await client.storage
+                        .from('registration-files')
+                        .upload(uniqueFileName, currentFile);
+
+                    if (uploadError) throw new Error(`Upload Failed for file [${i+1}]: ` + uploadError.message);
+
+                    const { data: publicUrlData } = client.storage
+                        .from('registration-files')
+                        .getPublicUrl(uniqueFileName);
+
+                    uploadedUrls.push(publicUrlData.publicUrl);
                 }
 
-                if (course.seats <= 0) {
-                    alert('No chairs left available for this training course.');
-                    return;
-                }
-
-                // Generates random name for the upload to prevent filename duplication conflicts
-                const fileExtension = file.name.split('.').pop();
-                const uniqueFileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
-
-                // Uploads directly to your "registration-files" public storage bucket
-                const { data: uploadData, error: uploadError } = await client.storage
-                    .from('registration-files')
-                    .upload(uniqueFileName, file);
-
-                if (uploadError) {
-                    throw new Error("File Upload Failed: " + uploadError.message);
-                }
-
-                const { data: publicUrlData } = client.storage
-                    .from('registration-files')
-                    .getPublicUrl(uniqueFileName);
-
-                const finalFileUrl = publicUrlData.publicUrl;
-
-                // Inserts clean information matching your new SQL configuration schema 
+                // Insert into registrations table using PostgreSQL format array strings
                 const { error: insertError } = await client.from('registrations').insert({
                     phone_number: phoneNumber,
-                    staff_name:   staffName,
+                    staff_name: staffName,
                     staff_number: staffNumber,
-                    institution:  institution,
-                    course_id:    courseId,
-                    file_url:     finalFileUrl
+                    institution: institution,
+                    course_id: courseId,
+                    file_urls: uploadedUrls
                 });
 
-                if (insertError) {
-                    throw new Error("Database Write Error: " + insertError.message);
-                }
+                if (insertError) throw new Error("Database Write Error: " + insertError.message);
 
-                // Subtracts 1 chair from available course seats counter
                 await client.from('courses')
-                    .update({ seats: course.seats - 1 })
+                    .update({ seats: currentCourse.seats - 1 })
                     .eq('id', courseId);
 
                 alert('Registration successfully verified and completed!');
 
-                // Clears fields out gracefully
                 document.getElementById('phoneNumber').value = '';
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
@@ -370,8 +186,9 @@
                 regBtn.disabled = false;
                 regBtn.innerText = "Register Now";
             }
-        }
-    </script>
+        };
 
+        loadCourses();
+    </script>
 </body>
 </html>
