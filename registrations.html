@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrations</title>
+    <title>Registrations Dashboard</title>
 
     <style>
         * {
@@ -21,7 +21,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1300px;
             margin: auto;
         }
 
@@ -47,10 +47,10 @@
         }
 
         .stat-card {
-            width: 220px;
+            width: 200px;
             background: white;
             border-radius: 25px;
-            padding: 35px;
+            padding: 30px;
             text-align: center;
             box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
             transition: .3s;
@@ -61,20 +61,21 @@
         }
 
         .stat-label {
-            font-size: 18px;
+            font-size: 16px;
             color: #2563eb;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            font-weight: bold;
         }
 
         .stat-number {
-            font-size: 55px;
+            font-size: 45px;
             font-weight: bold;
             color: #0f172a;
         }
 
         .stat-text {
             color: #64748b;
-            font-size: 16px;
+            font-size: 14px;
             margin-top: 5px;
         }
 
@@ -86,8 +87,14 @@
             overflow-x: auto;
         }
 
-        .table-card h2 {
+        .table-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 30px;
+        }
+
+        .table-card h2 {
             color: #0f172a;
         }
 
@@ -128,6 +135,7 @@
         tbody td {
             padding: 15px 20px;
             color: #0f172a;
+            vertical-align: middle;
         }
 
         .course-badge {
@@ -136,7 +144,27 @@
             padding: 5px 14px;
             border-radius: 20px;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: bold;
+        }
+
+        /* Styled button link to view documents */
+        .btn-view-file {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #4f46e5;
+            padding: 6px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 13px;
+            border: 1px solid #e2e8f0;
+            transition: 0.2s;
+        }
+
+        .btn-view-file:hover {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
         }
 
         .empty {
@@ -147,8 +175,6 @@
         }
 
         .export-btn {
-            float: right;
-            margin-bottom: 20px;
             padding: 12px 28px;
             background: linear-gradient(90deg, #2563eb, #7c3aed);
             border: none;
@@ -156,7 +182,6 @@
             font-size: 15px;
             border-radius: 12px;
             cursor: pointer;
-            width: auto;
         }
 
         .export-btn:hover {
@@ -169,14 +194,16 @@
 
     <div class="container">
 
-        <h1 class="title">Registrations</h1>
-        <p class="subtitle">All submitted registration data</p>
+        <h1 class="title">Registrations Dashboard</h1>
+        <p class="subtitle">Review user submissions and uploaded paperwork details live.</p>
 
         <div class="stats" id="stats"></div>
 
         <div class="table-card">
-            <button class="export-btn" onclick="exportCSV()">Export CSV</button>
-            <h2>Registration Data</h2>
+            <div class="table-header-row">
+                <h2>Registration Records</h2>
+                <button class="export-btn" onclick="exportCSV()">Export Data (CSV)</button>
+            </div>
             <table>
                 <thead>
                     <tr>
@@ -185,8 +212,9 @@
                         <th>Staff Name</th>
                         <th>Staff Number</th>
                         <th>Institution</th>
-                        <th>Course</th>
+                        <th>Course Target</th>
                         <th>Course Date</th>
+                        <th>Attachment</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -206,6 +234,7 @@
         let allData = [];
 
         async function loadData() {
+            // Pull data from course configurations and registrations simultaneously
             const { data: courses } = await client.from('courses').select('*');
             const { data: regs, error } = await client
                 .from('registrations')
@@ -213,10 +242,11 @@
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.log("Error:", error);
+                console.error("Error retrieving dashboard data records:", error);
                 return;
             }
 
+            // Bind matching courses info structures together natively 
             allData = regs.map(r => {
                 const targetCourse = courses.find(c => c.id === r.course_id);
                 return {
@@ -226,7 +256,7 @@
                 };
             });
 
-            // Metrics Logic
+            // Build dynamic counter metrics boxes 
             const totalRegs = allData.length;
             const courseCount = {};
             allData.forEach(r => {
@@ -235,7 +265,7 @@
 
             let statsHTML = `
                 <div class="stat-card">
-                    <div class="stat-label">Total</div>
+                    <div class="stat-label">Total Logs</div>
                     <div class="stat-number">${totalRegs}</div>
                     <div class="stat-text">Registrations</div>
                 </div>
@@ -253,23 +283,28 @@
 
             document.getElementById('stats').innerHTML = statsHTML;
 
-            // Populate Table Content
+            // Render table records layout 
             if (allData.length === 0) {
                 document.getElementById('tableBody').innerHTML = `
-                    <tr><td colspan="7" class="empty">No registrations yet.</td></tr>
+                    <tr><td colspan="8" class="empty">No registrations captured yet.</td></tr>
                 `;
                 return;
             }
 
             document.getElementById('tableBody').innerHTML = allData.map((r, i) => `
                 <tr>
-                    <td>${i + 1}</td>
+                    <td><b>${i + 1}</b></td>
                     <td>${r.phone_number || 'N/A'}</td>
                     <td>${r.staff_name}</td>
                     <td>${r.staff_number}</td>
                     <td>${r.institution}</td>
                     <td><span class="course-badge">${r.course_name}</span></td>
                     <td>${r.course_date}</td>
+                    <td>
+                        <a href="${r.file_url}" target="_blank" class="btn-view-file">
+                            📄 Open File
+                        </a>
+                    </td>
                 </tr>
             `).join('');
         }
@@ -278,19 +313,20 @@
 
         window.exportCSV = function () {
             if (allData.length === 0) {
-                alert("No data to export.");
+                alert("No data available to translate into CSV file documents.");
                 return;
             }
 
-            const headers = ['#', 'Phone Number', 'Staff Name', 'Staff Number', 'Institution', 'Course', 'Course Date'];
+            const headers = ['#', 'Phone Number', 'Staff Name', 'Staff Number', 'Institution', 'Course', 'Course Date', 'Uploaded Attachment URL'];
             const rows = allData.map((r, i) => [
                 i + 1,
-                `"\t${(r.phone_number || '').replace(/"/g, '""')}"`, // Prefixed with a tab to ensure spreadsheet apps keep leading zeroes intact
+                `"\t${(r.phone_number || '').replace(/"/g, '""')}"`, // Keeps leading numeric zeroes from vanishing inside Microsoft Excel
                 `"${r.staff_name.replace(/"/g, '""')}"`,
                 `"${r.staff_number.replace(/"/g, '""')}"`,
                 `"${r.institution.replace(/"/g, '""')}"`,
                 `"${r.course_name.replace(/"/g, '""')}"`,
-                r.course_date
+                r.course_date,
+                r.file_url
             ]);
 
             const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
@@ -298,7 +334,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'registrations.csv';
+            a.download = 'registrations_report.csv';
             a.click();
         }
     </script>
