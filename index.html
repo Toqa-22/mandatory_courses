@@ -31,7 +31,6 @@
         .single-upload-box label span { color: #dc2626; }
         .file-input { padding: 10px; background: white; border: 1px solid #cbd5e1; cursor: pointer; width: 100%; border-radius: 10px; }
         
-        /* New styling for rendering form blueprint snapshots inline */
         .form-blueprint-card { display: flex; gap: 15px; background: #f1f5f9; padding: 12px; border-radius: 10px; align-items: center; margin-top: 4px; border: 1px solid #e2e8f0; }
         .form-blueprint-card img { width: 85px; height: 85px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; background: white; }
         .form-blueprint-card div { font-size: 12px; color: #64748b; line-height: 1.4; }
@@ -62,15 +61,27 @@
                 <input type="text" id="staffNumber" placeholder="Staff Number" required>
                 <input type="tel" id="phoneNumber" placeholder="Phone Number" required>
                 
+                <select id="sexSelect" required>
+                    <option value="">-- Choose Sex --</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+                
                 <select id="designationSelect" required>
                     <option value="">-- Designation --</option>
-                    <option value="Doctor">Doctor</option>
                     <option value="Nurse">Nurse</option>
                     <option value="Physician">Physician</option>
                     <option value="Technician">Technician</option>
                 </select>
 
                 <input type="text" id="specializationInput" placeholder="Specialization" required>
+
+                <div class="form-group-full">
+                    <label for="courseSelect">Choose Target Session Course</label>
+                    <select id="courseSelect" required>
+                        <option value="">-- Choose Course --</option>
+                    </select>
+                </div>
 
                 <div class="form-group-full">
                     <label for="institutionTypeSelect">Institution</label>
@@ -85,33 +96,6 @@
                     <label for="departmentSelect">Select Department (Max 3 chairs per department)</label>
                     <select id="departmentSelect">
                         <option value="">-- Choose Department --</option>
-                        <option value="Emergency Department Doctor">Emergency Department Doctor</option>
-                        <option value="Emergency Department Nurse">Emergency Department Nurse</option>
-                        <option value="Internal Medicine Department">Internal Medicine Department</option>
-                        <option value="General Surgery Department">General Surgery Department</option>
-                        <option value="Paediatrician">Paediatrician</option>
-                        <option value="Obstetrics and Gynecology Department">Obstetrics and Gynecology Department</option>
-                        <option value="Orthopedics Department">Orthopedics Department</option>
-                        <option value="Ophthalmology Department">Ophthalmology Department</option>
-                        <option value="ENT Department">ENT Department</option>
-                        <option value="Anesthesia Department">Anesthesia Department</option>
-                        <option value="Dialysis Unit">Dialysis Unit</option>
-                        <option value="Radiology Department">Radiology Department</option>
-                        <option value="Laboratory Department">Laboratory Department</option>
-                        <option value="Physiotherapy Department">Physiotherapy Department</option>
-                        <option value="Clinical Nutrition Department">Clinical Nutrition Department</option>
-                        <option value="Pharmacy Department">Pharmacy Department</option>
-                        <option value="Male Medical and Surgical Ward">Male Medical and Surgical Ward</option>
-                        <option value="Female Medical and Surgical Ward">Female Medical and Surgical Ward</option>
-                        <option value="Pediatrics Ward">Pediatrics Ward</option>
-                        <option value="Obstetrics and Gynecology Ward">Obstetrics and Gynecology Ward</option>
-                        <option value="Adult Intensive Care Unit (ICU)">Adult Intensive Care Unit (ICU)</option>
-                        <option value="Special Care Baby Unit (SCBU)">Special Care Baby Unit (SCBU)</option>
-                        <option value="OPD">OPD</option>
-                        <option value="Nephrologist">Nephrologist</option>
-                        <option value="DS Nurse">DS Nurse</option>
-                        <option value="OT Nurse">OT Nurse</option>
-                        <option value="RT">RT</option>
                     </select>
                 </div>
 
@@ -139,13 +123,6 @@
                     </select>
                 </div>
                 
-                <div class="form-group-full">
-                    <label for="courseSelect">Choose Target Session Course</label>
-                    <select id="courseSelect" required>
-                        <option value="">-- Choose Course --</option>
-                    </select>
-                </div>
-                
                 <div class="dynamic-uploads-wrapper" id="dynamicUploadsContainer"></div>
             </div>
             
@@ -160,7 +137,7 @@
 
         const client = createClient(
             "https://pqgkdnxdsybcfamwadrf.supabase.co",
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZ2tkbnhkc3liY2ZhbXdhZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MzE0NjUsImV4cCI6MjA5NzEwNzQ2NX0.lugWuqNI5VMy6hCn-y38-hi825pIHcUjOCAWCsMJz4c"
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZ2tkbnhkc3liY2ZhbXdhZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTUzMTQ2NiwiZXhwIjoyMDk3MTA3NDY1fQ.lugWuqNI5VMy6hCn-y38-hi825pIHcUjOCAWCsMJz4c"
         );
 
         let coursesCached = [];
@@ -231,15 +208,37 @@
         function handleCourseSelectionChange() {
             const courseId = Number(document.getElementById('courseSelect').value);
             const container = document.getElementById('dynamicUploadsContainer');
+            const sexSelect = document.getElementById('sexSelect');
             
             renderInstitutionFields();
             
             if (!courseId) {
                 container.innerHTML = '<div style="color: #64748b; padding: 10px;">No available session course selected.</div>';
+                // Reset gender fields if no course selected
+                Array.from(sexSelect.options).forEach(opt => opt.disabled = false);
                 return;
             }
 
             const selectedCourse = coursesCached.find(c => c.id === courseId);
+            
+            // Align chosen sex selection to the configurations defined by the admin
+            const allowedSex = selectedCourse.allowed_sex || 'Both';
+            if (allowedSex === 'Male') {
+                sexSelect.value = 'Male';
+                Array.from(sexSelect.options).forEach(opt => {
+                    if(opt.value === 'Female') opt.disabled = true;
+                    else opt.disabled = false;
+                });
+            } else if (allowedSex === 'Female') {
+                sexSelect.value = 'Female';
+                Array.from(sexSelect.options).forEach(opt => {
+                    if(opt.value === 'Male') opt.disabled = true;
+                    else opt.disabled = false;
+                });
+            } else {
+                Array.from(sexSelect.options).forEach(opt => opt.disabled = false);
+            }
+
             const labels = selectedCourse && Array.isArray(selectedCourse.file_labels) 
                 ? selectedCourse.file_labels.filter(l => l && l.trim() !== "") 
                 : [];
@@ -286,6 +285,7 @@
             document.getElementById('courseCards').innerHTML = courses.map(course => {
                 const labels = Array.isArray(course.file_labels) ? course.file_labels.filter(l => l && l.trim() !== "") : [];
                 const reqCountText = labels.length > 0 ? `${labels.length} file(s)` : "None";
+                const sexConstraint = course.allowed_sex || 'Both';
                 
                 return `
                     <div class="course-card">
@@ -293,7 +293,8 @@
                         <div class="course-date-display">🗓️ ${course.course_date}</div>
                         <div class="seat-number">${course.seats}</div>
                         <div class="seat-text">Chairs Available</div>
-                        <div style="font-size:12px; margin-top:8px; color:#64748b; font-weight:bold;">Requires: ${reqCountText}</div>
+                        <div style="font-size:11px; margin-top:5px; color:#7c3aed; font-weight:bold;">Sex Target: ${sexConstraint}</div>
+                        <div style="font-size:11px; margin-top:3px; color:#64748b; font-weight:bold;">Requires: ${reqCountText}</div>
                     </div>
                 `;
             }).join('');
@@ -312,6 +313,7 @@
             const staffNumber = document.getElementById('staffNumber').value.trim();
             const designation = document.getElementById('designationSelect').value;
             const specialization = document.getElementById('specializationInput').value.trim();
+            const sex         = document.getElementById('sexSelect').value;
             const courseId    = Number(document.getElementById('courseSelect').value);
             const instType    = document.getElementById('institutionTypeSelect').value;
             
@@ -319,7 +321,7 @@
             const otherText    = document.getElementById('otherInstitutionInput').value.trim();
             const fileInputs   = document.querySelectorAll('.custom-file-target');
 
-            if (!phoneNumber || !staffName || !staffNumber || !designation || !specialization || !courseId || !instType) {
+            if (!phoneNumber || !staffName || !staffNumber || !designation || !specialization || !sex || !courseId || !instType) {
                 alert("Please complete all text fields and selection items.");
                 return;
             }
@@ -351,6 +353,11 @@
 
             try {
                 const currentCourse = coursesCached.find(c => c.id === courseId);
+
+                // Re-validate dynamic sex matching rules before insertion
+                if (currentCourse.allowed_sex && currentCourse.allowed_sex !== 'Both' && currentCourse.allowed_sex !== sex) {
+                    throw new Error(`This course track session is explicitly structured for ${currentCourse.allowed_sex} registrants only.`);
+                }
 
                 if (instType === 'Ibra') {
                     const { data: realTimeCheck } = await client.from('registrations')
@@ -389,6 +396,7 @@
                     staff_number: staffNumber,
                     designation_snapshot: designation,
                     specialization_snapshot: specialization, 
+                    sex_snapshot: sex,
                     institution_id: null,
                     institution_name_snapshot: institutionSnapshotString,
                     course_id: courseId,
@@ -406,6 +414,7 @@
                 document.getElementById('staffNumber').value = '';
                 document.getElementById('designationSelect').value = '';
                 document.getElementById('specializationInput').value = '';
+                document.getElementById('sexSelect').value = '';
                 document.getElementById('institutionTypeSelect').value = '';
                 document.getElementById('departmentSelect').value = '';
                 document.getElementById('otherInstitutionInput').value = '';
