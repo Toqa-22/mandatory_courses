@@ -62,7 +62,7 @@
                 <input type="tel" id="phoneNumber" placeholder="Phone Number" required>
                 
                 <select id="sexSelect" required>
-                    <option value="">-- Gender --</option>
+                    <option value="">-- SEX --</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                 </select>
@@ -473,7 +473,7 @@
 
                 const { error: insertError } = await client.from('registrations').insert({
                     phone_number: phoneNumber,
-                    sex: sexValue,
+                    sex_snapshot: sexValue,
                     staff_name: staffName,
                     staff_number: staffNumber,
                     designation_snapshot: designation,
