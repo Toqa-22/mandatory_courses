@@ -67,12 +67,16 @@
                     <option value="Female">Female</option>
                 </select>
                 
-                <select id="designationSelect" required>
-                    <option value="">-- Designation --</option>
-                    <option value="Nurse">Nurse</option>
-                    <option value="Physician">Physician</option>
-                    <option value="Technician">Technician</option>
-                </select>
+                <div>
+                    <select id="designationSelect" required>
+                        <option value="">-- Designation --</option>
+                        <option value="Nurse">Nurse</option>
+                        <option value="Physician">Physician</option>
+                        <option value="Technician">Technician</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <input type="text" id="otherDesignationInput" placeholder="Specify Designation" class="hidden-element" style="margin-top: 10px;">
+                </div>
 
                 <input type="text" id="specializationInput" placeholder="Specialization" required>
 
@@ -154,6 +158,20 @@
             "Obstetrics and Gynecology Ward", "Adult Intensive Care Unit (ICU)", "Special Care Baby Unit (SCBU)",
             "OPD", "Nephrologist", "DS Nurse", "OT Nurse", "RT"
         ];
+
+        function handleDesignationChange() {
+            const select = document.getElementById('designationSelect');
+            const otherInput = document.getElementById('otherDesignationInput');
+            if (select.value === 'Other') {
+                otherInput.classList.remove('hidden-element');
+                otherInput.required = true;
+            } else {
+                otherInput.classList.add('hidden-element');
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+            updateSelectableCoursesOptions();
+        }
 
         function renderInstitutionFields() {
             const selectedType = document.getElementById('institutionTypeSelect').value;
@@ -298,7 +316,12 @@
 
         function updateSelectableCoursesOptions() {
             const userSex = document.getElementById('sexSelect').value;
-            const userDesignation = document.getElementById('designationSelect').value;
+            let userDesignation = document.getElementById('designationSelect').value;
+            
+            if (userDesignation === 'Other') {
+                userDesignation = document.getElementById('otherDesignationInput').value.trim();
+            }
+            
             const courseDropdown = document.getElementById('courseSelect');
             const savedSelectedValue = courseDropdown.value;
 
@@ -374,7 +397,12 @@
             const sexValue    = document.getElementById('sexSelect').value;
             const staffName   = document.getElementById('staffName').value.trim();
             const staffNumber = document.getElementById('staffNumber').value.trim();
-            const designation = document.getElementById('designationSelect').value;
+            
+            let designation = document.getElementById('designationSelect').value;
+            if (designation === 'Other') {
+                designation = document.getElementById('otherDesignationInput').value.trim();
+            }
+            
             const specialization = document.getElementById('specializationInput').value.trim();
             const courseId    = Number(document.getElementById('courseSelect').value);
             const instType    = document.getElementById('institutionTypeSelect').value;
@@ -473,6 +501,8 @@
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
                 document.getElementById('designationSelect').value = '';
+                document.getElementById('otherDesignationInput').value = '';
+                document.getElementById('otherDesignationInput').classList.add('hidden-element');
                 document.getElementById('specializationInput').value = '';
                 document.getElementById('institutionTypeSelect').value = '';
                 document.getElementById('departmentSelect').value = '';
@@ -493,7 +523,8 @@
         document.getElementById('courseSelect').addEventListener('change', handleCourseSelectionChange);
         
         document.getElementById('sexSelect').addEventListener('change', updateSelectableCoursesOptions);
-        document.getElementById('designationSelect').addEventListener('change', updateSelectableCoursesOptions);
+        document.getElementById('designationSelect').addEventListener('change', handleDesignationChange);
+        document.getElementById('otherDesignationInput').addEventListener('input', updateSelectableCoursesOptions);
 
         document.getElementById('regBtn').addEventListener('click', handleSubmit);
 
