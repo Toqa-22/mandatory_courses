@@ -31,7 +31,6 @@
         .single-upload-box label span { color: #dc2626; }
         .file-input { padding: 10px; background: white; border: 1px solid #cbd5e1; cursor: pointer; width: 100%; border-radius: 10px; }
         
-        /* New styling for rendering form blueprint snapshots inline */
         .form-blueprint-card { display: flex; gap: 15px; background: #f1f5f9; padding: 12px; border-radius: 10px; align-items: center; margin-top: 4px; border: 1px solid #e2e8f0; }
         .form-blueprint-card img { width: 85px; height: 85px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; background: white; }
         .form-blueprint-card div { font-size: 12px; color: #64748b; line-height: 1.4; }
@@ -56,359 +55,44 @@
         </div>
 
         <div class="form-card">
-            <h2>Registration Form</h2>
-            <div class="form-grid">
-                <input type="text" id="staffName" placeholder="Staff Name" required>
-                <input type="text" id="staffNumber" placeholder="Staff Number" required>
-                <input type="tel" id="phoneNumber" placeholder="Phone Number" required>
-                
-                <select id="designationSelect" required>
-                    <option value="">-- Designation --</option>
-                    <option value="Doctor">Doctor</option>
-                    <option value="Nurse">Nurse</option>
-                    <option value="Physician">Physician</option>
-                    <option value="Technician">Technician</option>
-                </select>
-
-                <input type="text" id="specializationInput" placeholder="Specialization" required>
+            <h2>Registration Details</h2>
+            <form id="registrationForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Institution Origin</label>
+                        <select id="institutionSelect" required>
+                            <option value="">-- Choose Corporate / Academic Entity --</option>
+                            <option value="1" data-name="Al Mudhaibi Health Center">Al Mudhaibi Health Center</option>
+                            <option value="2" data-name="Wadi Bani Khalid Hospital">Wadi Bani Khalid Hospital</option>
+                            <option value="3" data-name="Sinaw Health Hospital">Sinaw Health Hospital</option>
+                            <option value="4" data-name="Ibra Health Center">Ibra Health Center</option>
+                            <option value="5" data-name="Sinaw Health Center">Sinaw Health Center</option>
+                            <option value="6" data-name="Al Yahmadi Health Center">Al Yahmadi Health Center</option>
+                            <option value="7" data-name="Al Mudhaibi Health Center (New)">Al Mudhaibi Health Center (New)</option>
+                            <option value="8" data-name="Samad Al Shaan Hospital">Samad Al Shaan Hospital</option>
+                            <option value="9" data-name="Bidiyah Hospital">Bidiyah Hospital</option>
+                            <option value="10" data-name="Al Qabil Health Center">Al Qabil Health Center</option>
+                            <option value="11" data-name="Wadi Dama Wa At Taiyyin Hospital">Wadi Dama Wa At Taiyyin Hospital</option>
+                            <option value="12" data-name="Al Dhahir Health Center">Al Dhahir Health Center</option>
+                            <option value="13" data-name="Al Jaza Health Center">Al Jaza Health Center</option>
+                            <option value="14" data-name="Sumayyan Health Center">Sumayyan Health Center</option>
+                            <option value="15" data-name="Al Jardaa Health Center">Al Jardaa Health Center</option>
+                            <option value="16" data-name="Al Aflaj Health Center">Al Aflaj Health Center</option>
+                            <option value="17" data-name="Miss Health Centre">Miss Health Centre</option>
+                        </select>
+                    </div>
+                </div>
 
                 <div class="form-group-full">
-                    <label for="institutionTypeSelect">Institution</label>
-                    <select id="institutionTypeSelect" required>
-                        <option value="">-- Choose Institution Option --</option>
-                        <option value="Ibra">Ibra</option>
-                        <option value="Other">Other</option>
-                    </select>
+                    <div id="uploadsContainer" class="dynamic-uploads-wrapper"></div>
                 </div>
 
-                <div class="form-group-full hidden-element" id="departmentContainer">
-                    <label for="departmentSelect">Select Department (Max 3 chairs per department)</label>
-                    <select id="departmentSelect">
-                        <option value="">-- Choose Department --</option>
-                        <option value="Emergency Department Doctor">Emergency Department Doctor</option>
-                        <option value="Emergency Department Nurse">Emergency Department Nurse</option>
-                        <option value="Internal Medicine Department">Internal Medicine Department</option>
-                        <option value="General Surgery Department">General Surgery Department</option>
-                        <option value="Paediatrician">Paediatrician</option>
-                        <option value="Obstetrics and Gynecology Department">Obstetrics and Gynecology Department</option>
-                        <option value="Orthopedics Department">Orthopedics Department</option>
-                        <option value="Ophthalmology Department">Ophthalmology Department</option>
-                        <option value="ENT Department">ENT Department</option>
-                        <option value="Anesthesia Department">Anesthesia Department</option>
-                        <option value="Dialysis Unit">Dialysis Unit</option>
-                        <option value="Radiology Department">Radiology Department</option>
-                        <option value="Laboratory Department">Laboratory Department</option>
-                        <option value="Physiotherapy Department">Physiotherapy Department</option>
-                        <option value="Clinical Nutrition Department">Clinical Nutrition Department</option>
-                        <option value="Pharmacy Department">Pharmacy Department</option>
-                        <option value="Male Medical and Surgical Ward">Male Medical and Surgical Ward</option>
-                        <option value="Female Medical and Surgical Ward">Female Medical and Surgical Ward</option>
-                        <option value="Pediatrics Ward">Pediatrics Ward</option>
-                        <option value="Obstetrics and Gynecology Ward">Obstetrics and Gynecology Ward</option>
-                        <option value="Adult Intensive Care Unit (ICU)">Adult Intensive Care Unit (ICU)</option>
-                        <option value="Special Care Baby Unit (SCBU)">Special Care Baby Unit (SCBU)</option>
-                        <option value="OPD">OPD</option>
-                        <option value="Nephrologist">Nephrologist</option>
-                        <option value="DS Nurse">DS Nurse</option>
-                        <option value="OT Nurse">OT Nurse</option>
-                        <option value="RT">RT</option>
-                    </select>
+                <div class="btn-row">
+                    <button type="submit" class="btn-register" id="submitBtn">Complete Registration</button>
                 </div>
-
-                <div class="form-group-full hidden-element" id="otherInstitutionContainer">
-                    <label for="otherInstitutionInput">Specify Institution Name</label>
-                    <input type="text" id="otherInstitutionInput" placeholder="Enter your official institution details">
-                </div>
-                
-                <div class="form-group-full">
-                    <label for="courseSelect">Choose Target Session Course</label>
-                    <select id="courseSelect" required>
-                        <option value="">-- Choose Course --</option>
-                    </select>
-                </div>
-                
-                <div class="dynamic-uploads-wrapper" id="dynamicUploadsContainer"></div>
-            </div>
-            
-            <div class="btn-row">
-                <button class="btn-register" id="regBtn">Register Now</button>
-            </div>
+            </form>
         </div>
     </div>
 
-    <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
-        const client = createClient(
-            "https://pqgkdnxdsybcfamwadrf.supabase.co",
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZ2tkbnhkc3liY2ZhbXdhZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MzE0NjUsImV4cCI6MjA5NzEwNzQ2NX0.lugWuqNI5VMy6hCn-y38-hi825pIHcUjOCAWCsMJz4c"
-        );
-
-        let coursesCached = [];
-        let registrationLogsCached = [];
-
-        const departmentsList = [
-            "Emergency Department Doctor", "Emergency Department Nurse", "Internal Medicine Department", "General Surgery Department",
-            "Paediatrician", "Obstetrics and Gynecology Department", "Orthopedics Department",
-            "Ophthalmology Department", "ENT Department", "Anesthesia Department",
-            "Dialysis Unit", "Radiology Department", "Laboratory Department",
-            "Physiotherapy Department", "Clinical Nutrition Department", "Pharmacy Department",
-            "Male Medical and Surgical Ward", "Female Medical and Surgical Ward", "Pediatrics Ward",
-            "Obstetrics and Gynecology Ward", "Adult Intensive Care Unit (ICU)", "Special Care Baby Unit (SCBU)",
-            "OPD", "Nephrologist", "DS Nurse", "OT Nurse", "RT"
-        ];
-
-        function renderInstitutionFields() {
-            const selectedType = document.getElementById('institutionTypeSelect').value;
-            const deptContainer = document.getElementById('departmentContainer');
-            const otherContainer = document.getElementById('otherInstitutionContainer');
-            const courseId = Number(document.getElementById('courseSelect').value);
-
-            if (selectedType === 'Ibra') {
-                deptContainer.classList.remove('hidden-element');
-                otherContainer.classList.add('hidden-element');
-                document.getElementById('otherInstitutionInput').value = '';
-                filterIbraDepartments(courseId);
-            } else if (selectedType === 'Other') {
-                otherContainer.classList.remove('hidden-element');
-                deptContainer.classList.add('hidden-element');
-                document.getElementById('departmentSelect').value = '';
-            } else {
-                deptContainer.classList.add('hidden-element');
-                otherContainer.classList.add('hidden-element');
-                document.getElementById('departmentSelect').value = '';
-                document.getElementById('otherInstitutionInput').value = '';
-            }
-        }
-
-        function filterIbraDepartments(courseId) {
-            const deptDropdown = document.getElementById('departmentSelect');
-            const currentSelected = deptDropdown.value;
-            
-            let html = '<option value="">-- Choose Department --</option>';
-            departmentsList.forEach(dept => {
-                let chairsLeftStr = '';
-                let isClosed = false;
-
-                if (courseId) {
-                    const matchString = `Ibra - ${dept}`;
-                    const countFilled = registrationLogsCached.filter(r => r.course_id === courseId && r.institution_name_snapshot === matchString).length;
-                    const chairsLeft = Math.max(0, 3 - countFilled);
-                    chairsLeftStr = ` (${chairsLeft} chairs remaining)`;
-                    if (chairsLeft <= 0) isClosed = true;
-                }
-
-                const selectedAttr = (dept === currentSelected) ? 'selected' : '';
-
-                if (!isClosed) {
-                    html += `<option value="${dept}" ${selectedAttr}>${dept}${chairsLeftStr}</option>`;
-                } else {
-                    html += `<option value="${dept}" disabled style="color:#cbd5e1;" ${selectedAttr}>${dept} (CLOSED - No chairs left)</option>`;
-                }
-            });
-            deptDropdown.innerHTML = html;
-        }
-
-        function handleCourseSelectionChange() {
-            const courseId = Number(document.getElementById('courseSelect').value);
-            const container = document.getElementById('dynamicUploadsContainer');
-            
-            renderInstitutionFields();
-            
-            if (!courseId) {
-                container.innerHTML = '<div style="color: #64748b; padding: 10px;">No available session course selected.</div>';
-                return;
-            }
-
-            const selectedCourse = coursesCached.find(c => c.id === courseId);
-            const labels = selectedCourse && Array.isArray(selectedCourse.file_labels) 
-                ? selectedCourse.file_labels.filter(l => l && l.trim() !== "") 
-                : [];
-            const examples = selectedCourse && Array.isArray(selectedCourse.file_examples) ? selectedCourse.file_examples : [];
-            
-            if (labels.length === 0) {
-                container.innerHTML = '<div class="no-uploads-msg">✅ No document attachments are required for this course session.</div>';
-                return;
-            }
-
-            container.innerHTML = labels.map((descText, idx) => {
-                const exampleUrl = examples[idx] || '';
-                
-                // CHANGED: Instead of a text hyperlink anchor, this builds an embedded card blueprint configuration
-                const exampleImageHtml = exampleUrl ? `
-                    <div class="form-blueprint-card">
-                        <a href="${exampleUrl}" target="_blank">
-                            <img src="${exampleUrl}" alt="Template Reference Guide" onerror="this.parentElement.parentElement.style.display='none'">
-                        </a>
-                        <div>
-                            <b>Example Document Blueprint:</b>
-                            Please ensure your copy matches the alignment clarity, layout format, and content properties shown here.
-                        </div>
-                    </div>` : '';
-
-                return `
-                    <div class="single-upload-box">
-                        <label>Upload Document #${idx + 1}: <span>${descText} *</span></label>
-                        ${exampleImageHtml}
-                        <input type="file" class="file-input custom-file-target" data-label="${descText}" accept="image/*, .pdf" required>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        async function loadRegistrationFormConfig() {
-            const { data: courses, error: courseErr } = await client.from('courses').select('*').order('id', { ascending: true });
-            if (courseErr) return console.log("Database fetch error:", courseErr);
-            coursesCached = courses;
-
-            const { data: registers, error: regErr } = await client.from('registrations').select('course_id, institution_name_snapshot');
-            if (regErr) return console.log("Logs fetch error:", regErr);
-            registrationLogsCached = registers || [];
-
-            document.getElementById('courseCards').innerHTML = courses.map(course => {
-                const labels = Array.isArray(course.file_labels) ? course.file_labels.filter(l => l && l.trim() !== "") : [];
-                const reqCountText = labels.length > 0 ? `${labels.length} file(s)` : "None";
-                
-                return `
-                    <div class="course-card">
-                        <div class="course-name">${course.name}</div>
-                        <div class="course-date-display">🗓️ ${course.course_date}</div>
-                        <div class="seat-number">${course.seats}</div>
-                        <div class="seat-text">Chairs Available</div>
-                        <div style="font-size:12px; margin-top:8px; color:#64748b; font-weight:bold;">Requires: ${reqCountText}</div>
-                    </div>
-                `;
-            }).join('');
-
-            const selectableCourses = courses.filter(c => c.seats > 0);
-            document.getElementById('courseSelect').innerHTML = '<option value="">-- Choose Course --</option>' + 
-                selectableCourses.map(c => `<option value="${c.id}">${c.name} (🗓️ ${c.course_date}) (${c.seats} chairs left)</option>`).join('');
-
-            handleCourseSelectionChange();
-        }
-
-        async function handleSubmit() {
-            const regBtn = document.getElementById('regBtn');
-            const phoneNumber = document.getElementById('phoneNumber').value.trim();
-            const staffName   = document.getElementById('staffName').value.trim();
-            const staffNumber = document.getElementById('staffNumber').value.trim();
-            const designation = document.getElementById('designationSelect').value;
-            const specialization = document.getElementById('specializationInput').value.trim();
-            const courseId    = Number(document.getElementById('courseSelect').value);
-            const instType    = document.getElementById('institutionTypeSelect').value;
-            
-            const selectedDept = document.getElementById('departmentSelect').value;
-            const otherText    = document.getElementById('otherInstitutionInput').value.trim();
-            const fileInputs   = document.querySelectorAll('.custom-file-target');
-
-            if (!phoneNumber || !staffName || !staffNumber || !designation || !specialization || !courseId || !instType) {
-                alert("Please complete all text fields and selection items.");
-                return;
-            }
-
-            let institutionSnapshotString = '';
-            if (instType === 'Ibra') {
-                if (!selectedDept) {
-                    alert("Please select your target department.");
-                    return;
-                }
-                institutionSnapshotString = `Ibra - ${selectedDept}`;
-            } else {
-                if (!otherText) {
-                    alert("Please fill in your institution name.");
-                    return;
-                }
-                institutionSnapshotString = otherText;
-            }
-
-            for (let input of fileInputs) {
-                if (!input.files || input.files.length === 0) {
-                    alert(`Registration denied! Missing file target object: "${input.getAttribute('data-label')}"`);
-                    return;
-                }
-            }
-
-            regBtn.disabled = true;
-            regBtn.innerText = "Processing server storage sequence uploads...";
-
-            try {
-                const currentCourse = coursesCached.find(c => c.id === courseId);
-
-                if (instType === 'Ibra') {
-                    const { data: realTimeCheck } = await client.from('registrations')
-                        .select('id')
-                        .eq('course_id', courseId)
-                        .eq('institution_name_snapshot', institutionSnapshotString);
-                    
-                    if (realTimeCheck && realTimeCheck.length >= 3) {
-                        throw new Error("This specific department room row has filled its 3 max chairs cap bounds limit just now. Please pick another department.");
-                    }
-                }
-
-                const uploadedUrls = [];
-                for (let i = 0; i < fileInputs.length; i++) {
-                    const currentFile = fileInputs[i].files[0];
-                    const fileExtension = currentFile.name.split('.').pop();
-                    const cleanLabel = fileInputs[i].getAttribute('data-label').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                    const uniqueFileName = `${Date.now()}_${cleanLabel}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
-
-                    const { error: uploadError } = await client.storage
-                        .from('registration-files')
-                        .upload(uniqueFileName, currentFile);
-
-                    if (uploadError) throw new Error(`Upload Failed: ` + uploadError.message);
-
-                    const { data: publicUrlData } = client.storage
-                        .from('registration-files')
-                        .getPublicUrl(uniqueFileName);
-
-                    uploadedUrls.push(publicUrlData.publicUrl);
-                }
-
-                const { error: insertError } = await client.from('registrations').insert({
-                    phone_number: phoneNumber,
-                    staff_name: staffName,
-                    staff_number: staffNumber,
-                    designation_snapshot: designation,
-                    specialization_snapshot: specialization, 
-                    institution_id: null,
-                    institution_name_snapshot: institutionSnapshotString,
-                    course_id: courseId,
-                    file_urls: uploadedUrls
-                });
-
-                if (insertError) throw new Error("Database Write Error: " + insertError.message);
-
-                await client.from('courses').update({ seats: currentCourse.seats - 1 }).eq('id', courseId);
-
-                alert('Registration verified and successfully logged!');
-                
-                document.getElementById('phoneNumber').value = '';
-                document.getElementById('staffName').value   = '';
-                document.getElementById('staffNumber').value = '';
-                document.getElementById('designationSelect').value = '';
-                document.getElementById('specializationInput').value = '';
-                document.getElementById('institutionTypeSelect').value = '';
-                document.getElementById('departmentSelect').value = '';
-                document.getElementById('otherInstitutionInput').value = '';
-                document.getElementById('courseSelect').value = '';
-                
-                await loadRegistrationFormConfig();
-
-            } catch (err) {
-                alert(err.message || "An error occurred.");
-            } finally {
-                regBtn.disabled = false;
-                regBtn.innerText = "Register Now";
-            }
-        }
-
-        document.getElementById('institutionTypeSelect').addEventListener('change', renderInstitutionFields);
-        document.getElementById('courseSelect').addEventListener('change', handleCourseSelectionChange);
-        document.getElementById('departmentSelect').addEventListener('change', renderInstitutionFields);
-        document.getElementById('regBtn').addEventListener('click', handleSubmit);
-
-        loadRegistrationFormConfig();
-    </script>
 </body>
 </html>
