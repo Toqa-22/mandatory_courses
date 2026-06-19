@@ -277,7 +277,6 @@
                 registrationLogsCached = registers || [];
 
                 document.getElementById('courseCards').innerHTML = courses.map(course => {
-                    const labels = Array.isArray(course.file_labels) ? course.file_labels.filter(l => l && l.trim() !== "") : [];
                     return `
                         <div class="course-card">
                             <div class="course-name">${course.name}</div>
@@ -324,7 +323,6 @@
                 return;
             }
 
-            // CRITICAL STEP: Make sure you have created a storage bucket named 'registration-files' in Supabase!
             regBtn.disabled = true;
             regBtn.innerText = "Processing submission...";
 
@@ -340,7 +338,6 @@
                     const fileExtension = currentFile.name.split('.').pop();
                     const uniqueFileName = `${Date.now()}_file_${Math.random().toString(36).substring(7)}.${fileExtension}`;
 
-                    // Attempting bucket target storage upload
                     const { error: uploadError } = await client.storage
                         .from('registration-files')
                         .upload(uniqueFileName, currentFile);
@@ -356,7 +353,6 @@
                     uploadedUrls.push(publicUrlData.publicUrl);
                 }
 
-                // Database Write Operation
                 const { error: insertError } = await client.from('registrations').insert({
                     phone_number: phoneNumber,
                     staff_name: staffName,
@@ -373,12 +369,10 @@
                     throw new Error(`Database Write Rejected: ${insertError.message}. Ensure columns exist exactly as described.`);
                 }
 
-                // Decrement standard seat limits 
                 await client.from('courses').update({ seats: currentCourse.seats - 1 }).eq('id', courseId);
 
                 alert('Registration successfully tracked and logged!');
                 
-                // Clear out everything
                 document.getElementById('phoneNumber').value = '';
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
@@ -403,7 +397,6 @@
 
         document.getElementById('institutionTypeSelect').addEventListener('change', renderInstitutionFields);
         document.getElementById('courseSelect').addEventListener('change', handleCourseSelectionChange);
-        document.getElementById('departmentSelect').addEventListener('change', renderInstitutionFields);
         document.getElementById('regBtn').addEventListener('click', handleSubmit);
 
         loadRegistrationFormConfig();
