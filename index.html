@@ -199,7 +199,7 @@
                 if (!isClosed) {
                     html += `<option value="${dept}" ${selectedAttr}>${dept}${chairsLeftStr}</option>`;
                 } else {
-                    html += `<option value="${dept}" disabled style="color:#cbd5e1;" ${selectedAttr}>${dept} (CLOSED - No chairs left)</option>`;
+                    html += `<option value="${dept}" disabled style="color:#cbd5e1;" ${selectedAttr}>${dept} (CLOSED)</option>`;
                 }
             });
             deptDropdown.innerHTML = html;
@@ -214,35 +214,32 @@
             
             if (!courseId) {
                 container.innerHTML = '<div style="color: #64748b; padding: 10px;">No available session course selected.</div>';
-                // Reset gender fields if no course selected
                 Array.from(sexSelect.options).forEach(opt => opt.disabled = false);
                 return;
             }
 
             const selectedCourse = coursesCached.find(c => c.id === courseId);
+            if (!selectedCourse) return;
             
-            // Align chosen sex selection to the configurations defined by the admin
             const allowedSex = selectedCourse.allowed_sex || 'Both';
             if (allowedSex === 'Male') {
                 sexSelect.value = 'Male';
                 Array.from(sexSelect.options).forEach(opt => {
-                    if(opt.value === 'Female') opt.disabled = true;
-                    else opt.disabled = false;
+                    opt.disabled = (opt.value === 'Female');
                 });
             } else if (allowedSex === 'Female') {
                 sexSelect.value = 'Female';
                 Array.from(sexSelect.options).forEach(opt => {
-                    if(opt.value === 'Male') opt.disabled = true;
-                    else opt.disabled = false;
+                    opt.disabled = (opt.value === 'Male');
                 });
             } else {
                 Array.from(sexSelect.options).forEach(opt => opt.disabled = false);
             }
 
-            const labels = selectedCourse && Array.isArray(selectedCourse.file_labels) 
+            const labels = Array.isArray(selectedCourse.file_labels) 
                 ? selectedCourse.file_labels.filter(l => l && l.trim() !== "") 
                 : [];
-            const examples = selectedCourse && Array.isArray(selectedCourse.file_examples) ? selectedCourse.file_examples : [];
+            const examples = Array.isArray(selectedCourse.file_examples) ? selectedCourse.file_examples : [];
             
             if (labels.length === 0) {
                 container.innerHTML = '<div class="no-uploads-msg">✅ No document attachments are required for this course session.</div>';
@@ -251,59 +248,54 @@
 
             container.innerHTML = labels.map((descText, idx) => {
                 const exampleUrl = examples[idx] || '';
-                
                 const exampleImageHtml = exampleUrl ? `
                     <div class="form-blueprint-card">
                         <a href="${exampleUrl}" target="_blank">
-                            <img src="${exampleUrl}" alt="Template Reference Guide" onerror="this.parentElement.parentElement.style.display='none'">
+                            <img src="${exampleUrl}" alt="Template" onerror="this.parentElement.parentElement.style.display='none'">
                         </a>
-                        <div>
-                            <b>Example Document Blueprint:</b>
-                            Please ensure your copy matches the alignment clarity, layout format, and content properties shown here.
-                        </div>
+                        <div><b>Template Reference:</b> Matches specifications.</div>
                     </div>` : '';
 
                 return `
                     <div class="single-upload-box">
                         <label>Upload Document #${idx + 1}: <span>${descText} *</span></label>
                         ${exampleImageHtml}
-                        <input type="file" class="file-input custom-file-target" data-label="${descText}" accept="image/*, .pdf" required>
+                        <input type="file" class="file-input custom-file-target" data-label="${descText}" required>
                     </div>
                 `;
             }).join('');
         }
 
         async function loadRegistrationFormConfig() {
-            const { data: courses, error: courseErr } = await client.from('courses').select('*').order('id', { ascending: true });
-            if (courseErr) return console.log("Database fetch error:", courseErr);
-            coursesCached = courses;
+            try {
+                const { data: courses, error: courseErr } = await client.from('courses').select('*').order('id', { ascending: true });
+                if (courseErr) throw courseErr;
+                coursesCached = courses;
 
-            const { data: registers, error: regErr } = await client.from('registrations').select('course_id, institution_name_snapshot');
-            if (regErr) return console.log("Logs fetch error:", regErr);
-            registrationLogsCached = registers || [];
+                const { data: registers, error: regErr } = await client.from('registrations').select('course_id, institution_name_snapshot');
+                if (regErr) throw regErr;
+                registrationLogsCached = registers || [];
 
-            document.getElementById('courseCards').innerHTML = courses.map(course => {
-                const labels = Array.isArray(course.file_labels) ? course.file_labels.filter(l => l && l.trim() !== "") : [];
-                const reqCountText = labels.length > 0 ? `${labels.length} file(s)` : "None";
-                const sexConstraint = course.allowed_sex || 'Both';
-                
-                return `
-                    <div class="course-card">
-                        <div class="course-name">${course.name}</div>
-                        <div class="course-date-display">🗓️ ${course.course_date}</div>
-                        <div class="seat-number">${course.seats}</div>
-                        <div class="seat-text">Chairs Available</div>
-                        <div style="font-size:11px; margin-top:5px; color:#7c3aed; font-weight:bold;">Sex Target: ${sexConstraint}</div>
-                        <div style="font-size:11px; margin-top:3px; color:#64748b; font-weight:bold;">Requires: ${reqCountText}</div>
-                    </div>
-                `;
-            }).join('');
+                document.getElementById('courseCards').innerHTML = courses.map(course => {
+                    const labels = Array.isArray(course.file_labels) ? course.file_labels.filter(l => l && l.trim() !== "") : [];
+                    return `
+                        <div class="course-card">
+                            <div class="course-name">${course.name}</div>
+                            <div class="course-date-display">🗓️ ${course.course_date}</div>
+                            <div class="seat-number">${course.seats}</div>
+                            <div class="seat-text">Chairs Available</div>
+                        </div>
+                    `;
+                }).join('');
 
-            const selectableCourses = courses.filter(c => c.seats > 0);
-            document.getElementById('courseSelect').innerHTML = '<option value="">-- Choose Course --</option>' + 
-                selectableCourses.map(c => `<option value="${c.id}">${c.name} (🗓️ ${c.course_date}) (${c.seats} chairs left)</option>`).join('');
+                const selectableCourses = courses.filter(c => c.seats > 0);
+                document.getElementById('courseSelect').innerHTML = '<option value="">-- Choose Course --</option>' + 
+                    selectableCourses.map(c => `<option value="${c.id}">${c.name} (${c.seats} left)</option>`).join('');
 
-            handleCourseSelectionChange();
+                handleCourseSelectionChange();
+            } catch (err) {
+                alert("Initialization Data Read Error: " + err.message);
+            }
         }
 
         async function handleSubmit() {
@@ -322,66 +314,40 @@
             const fileInputs   = document.querySelectorAll('.custom-file-target');
 
             if (!phoneNumber || !staffName || !staffNumber || !designation || !specialization || !sex || !courseId || !instType) {
-                alert("Please complete all text fields and selection items.");
+                alert("Please fill all form inputs.");
                 return;
             }
 
-            let institutionSnapshotString = '';
-            if (instType === 'Ibra') {
-                if (!selectedDept) {
-                    alert("Please select your target department.");
-                    return;
-                }
-                institutionSnapshotString = `Ibra - ${selectedDept}`;
-            } else {
-                if (!otherText) {
-                    alert("Please select your institution name.");
-                    return;
-                }
-                institutionSnapshotString = otherText;
+            let institutionSnapshotString = (instType === 'Ibra') ? `Ibra - ${selectedDept}` : otherText;
+            if ((instType === 'Ibra' && !selectedDept) || (instType === 'Other' && !otherText)) {
+                alert("Please complete the Institution selection parameters.");
+                return;
             }
 
-            for (let input of fileInputs) {
-                if (!input.files || input.files.length === 0) {
-                    alert(`Registration denied! Missing file target object: "${input.getAttribute('data-label')}"`);
-                    return;
-                }
-            }
-
+            // CRITICAL STEP: Make sure you have created a storage bucket named 'registration-files' in Supabase!
             regBtn.disabled = true;
-            regBtn.innerText = "Processing server storage sequence uploads...";
+            regBtn.innerText = "Processing submission...";
 
             try {
                 const currentCourse = coursesCached.find(c => c.id === courseId);
-
-                // Re-validate dynamic sex matching rules before insertion
-                if (currentCourse.allowed_sex && currentCourse.allowed_sex !== 'Both' && currentCourse.allowed_sex !== sex) {
-                    throw new Error(`This course track session is explicitly structured for ${currentCourse.allowed_sex} registrants only.`);
-                }
-
-                if (instType === 'Ibra') {
-                    const { data: realTimeCheck } = await client.from('registrations')
-                        .select('id')
-                        .eq('course_id', courseId)
-                        .eq('institution_name_snapshot', institutionSnapshotString);
-                    
-                    if (realTimeCheck && realTimeCheck.length >= 3) {
-                        throw new Error("This specific department room row has filled its 3 max chairs cap bounds limit just now. Please pick another department.");
-                    }
-                }
-
                 const uploadedUrls = [];
+
                 for (let i = 0; i < fileInputs.length; i++) {
+                    if (!fileInputs[i].files || fileInputs[i].files.length === 0) {
+                        throw new Error(`Missing file requirement: ${fileInputs[i].getAttribute('data-label')}`);
+                    }
                     const currentFile = fileInputs[i].files[0];
                     const fileExtension = currentFile.name.split('.').pop();
-                    const cleanLabel = fileInputs[i].getAttribute('data-label').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                    const uniqueFileName = `${Date.now()}_${cleanLabel}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
+                    const uniqueFileName = `${Date.now()}_file_${Math.random().toString(36).substring(7)}.${fileExtension}`;
 
+                    // Attempting bucket target storage upload
                     const { error: uploadError } = await client.storage
                         .from('registration-files')
                         .upload(uniqueFileName, currentFile);
 
-                    if (uploadError) throw new Error(`Upload Failed: ` + uploadError.message);
+                    if (uploadError) {
+                        throw new Error(`Storage Bucket upload failed. Verify that a storage bucket named exactly "registration-files" exists and is public in Supabase. Error: ${uploadError.message}`);
+                    }
 
                     const { data: publicUrlData } = client.storage
                         .from('registration-files')
@@ -390,6 +356,7 @@
                     uploadedUrls.push(publicUrlData.publicUrl);
                 }
 
+                // Database Write Operation
                 const { error: insertError } = await client.from('registrations').insert({
                     phone_number: phoneNumber,
                     staff_name: staffName,
@@ -397,23 +364,26 @@
                     designation_snapshot: designation,
                     specialization_snapshot: specialization, 
                     sex_snapshot: sex,
-                    institution_id: null,
                     institution_name_snapshot: institutionSnapshotString,
                     course_id: courseId,
                     file_urls: uploadedUrls
                 });
 
-                if (insertError) throw new Error("Database Write Error: " + insertError.message);
+                if (insertError) {
+                    throw new Error(`Database Write Rejected: ${insertError.message}. Ensure columns exist exactly as described.`);
+                }
 
+                // Decrement standard seat limits 
                 await client.from('courses').update({ seats: currentCourse.seats - 1 }).eq('id', courseId);
 
-                alert('Registration verified and successfully logged!');
+                alert('Registration successfully tracked and logged!');
                 
+                // Clear out everything
                 document.getElementById('phoneNumber').value = '';
                 document.getElementById('staffName').value   = '';
                 document.getElementById('staffNumber').value = '';
-                document.getElementById('designationSelect').value = '';
                 document.getElementById('specializationInput').value = '';
+                document.getElementById('designationSelect').value = '';
                 document.getElementById('sexSelect').value = '';
                 document.getElementById('institutionTypeSelect').value = '';
                 document.getElementById('departmentSelect').value = '';
@@ -423,7 +393,8 @@
                 await loadRegistrationFormConfig();
 
             } catch (err) {
-                alert(err.message || "An error occurred.");
+                alert("FORM FAILURE DISCOVERY:\n\n" + err.message);
+                console.error(err);
             } finally {
                 regBtn.disabled = false;
                 regBtn.innerText = "Register Now";
