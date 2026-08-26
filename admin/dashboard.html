@@ -81,12 +81,6 @@
                         <h4 style="margin-bottom: 10px; color:#334155;">Institutional Allocations / Chair Mapping</h4>
                         
                         <div class="allocation-controls">
-                            <select id="allocationFilterSelect" style="padding: 10px; font-size: 13px;">
-                                <option>...Institutions Restrictions Options...</option>
-                                <option value="ALL">ALL Institutions Restrictions</option>
-                                <option value="IBRA">Ibra Hospital Institutions Restrictions Only</option>
-                                <option value="OTHER">Other Institutions Restrictions Only</option>
-                            </select>
                             <select id="allocationBulkSelectAction" style="padding: 10px; font-size: 13px;">
                                 <option value="">-- Bulk Select Toggles --</option>
                                 <option value="ALL">Select All Visible</option>
@@ -106,7 +100,7 @@
                             <button type="button" class="btn-action btn-add" id="applyBulkSeatsBtn">Apply Bulk Seats</button>
                         </div>
 
-                        <!-- Split Containers into Ibra and Other -->
+                        <!-- Ibra and Other are always both shown, so admin can pick from either -->
                         <div id="ibraSectionBox" style="margin-bottom: 15px;">
                             <h5 style="font-size: 13px; color: #475569; margin-bottom: 6px; font-weight: bold;">Ibra Settings</h5>
                             <div class="allocation-container" id="allocationWrapperIbra"></div>
