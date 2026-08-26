@@ -194,13 +194,13 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
             if (userDesignation) {
                 filtered = filtered.filter(c => {
-                    if (!c.target_designation) return true;
+                    if (!c.allowed_designations) return true;
                     try {
-                        const targetList = Array.isArray(c.target_designation) ? c.target_designation : JSON.parse(c.target_designation);
-                        if (targetList.length === 0) return true;
+                        const targetList = Array.isArray(c.allowed_designations) ? c.allowed_designations : JSON.parse(c.allowed_designations);
+                        if (targetList.length === 0 || targetList.includes('All')) return true;
                         return targetList.includes(userDesignation);
                     } catch (e) {
-                        return c.target_designation.includes(userDesignation);
+                        return true;
                     }
                 });
             }
