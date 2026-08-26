@@ -20,6 +20,99 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             "OPD", "Nephrologist", "DS Nurse", "OT Nurse", "RT"
         ];
 
+        const DESIGNATION_OPTIONS = ["Nurse", "Physician", "Technician", "Other"];
+
+        // Fields that only appear once a course has been chosen
+        const REST_OF_FORM_IDS = [
+            'staffName', 'staffNumber', 'phoneNumber', 'sexSelect',
+            'designationFieldWrapper', 'specializationInput',
+            'institutionFieldWrapper', 'submitRowContainer'
+        ];
+
+        function toggleFormVisibility(show) {
+            REST_OF_FORM_IDS.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('hidden-element', !show);
+            });
+        }
+
+        function updateGenderOptionsForCourse(courseId) {
+            const select = document.getElementById('sexSelect');
+            const currentValue = select.value;
+            const course = coursesCached.find(c => c.id === courseId);
+            const allowedSex = course ? course.allowed_sex : null;
+
+            let allowed;
+            if (allowedSex === 'Male') {
+                allowed = [{ v: 'Male', t: 'Male' }];
+            } else if (allowedSex === 'Female') {
+                allowed = [{ v: 'Female', t: 'Female' }];
+            } else {
+                allowed = [{ v: 'Male', t: 'Male' }, { v: 'Female', t: 'Female' }];
+            }
+
+            let optionsHtml = '<option value="">-- Gender --</option>';
+            optionsHtml += allowed.map(o => `<option value="${o.v}">${o.t}</option>`).join('');
+            select.innerHTML = optionsHtml;
+
+            select.value = allowed.some(o => o.v === currentValue) ? currentValue : '';
+        }
+
+        function updateInstitutionTypeOptionsForCourse(courseId) {
+            const select = document.getElementById('institutionTypeSelect');
+            const currentValue = select.value;
+            const mappingsForCourse = courseInstitutionsMapCached.filter(m => m.course_id === courseId);
+
+            const hasIbra = mappingsForCourse.some(m => m.institutions?.name?.startsWith('Ibra - '));
+            const hasOther = mappingsForCourse.some(m => m.institutions?.name && !m.institutions.name.startsWith('Ibra - '));
+            // If no allocation has been configured for this course at all, fall back to showing both
+            // rather than blocking registration entirely.
+            const noMappingConfigured = mappingsForCourse.length === 0;
+
+            let optionsHtml = '<option value="">-- Choose Institution Option --</option>';
+            if (hasIbra || noMappingConfigured) optionsHtml += '<option value="Ibra">Ibra hospital</option>';
+            if (hasOther || noMappingConfigured) optionsHtml += '<option value="Other">Other hospital and health center</option>';
+            select.innerHTML = optionsHtml;
+
+            const stillValid = (currentValue === 'Ibra' && (hasIbra || noMappingConfigured)) ||
+                                (currentValue === 'Other' && (hasOther || noMappingConfigured));
+            select.value = stillValid ? currentValue : '';
+        }
+
+        function updateDesignationOptionsForCourse(courseId) {
+            const select = document.getElementById('designationSelect');
+            const currentValue = select.value;
+            const course = coursesCached.find(c => c.id === courseId);
+
+            let allowed = DESIGNATION_OPTIONS;
+            if (course && course.allowed_designations) {
+                try {
+                    const list = Array.isArray(course.allowed_designations)
+                        ? course.allowed_designations
+                        : JSON.parse(course.allowed_designations);
+                    if (Array.isArray(list) && list.length > 0 && !list.includes('All')) {
+                        allowed = DESIGNATION_OPTIONS.filter(d => list.includes(d));
+                    }
+                } catch (e) {
+                    allowed = DESIGNATION_OPTIONS;
+                }
+            }
+
+            let optionsHtml = '<option value="">-- Designation --</option>';
+            optionsHtml += allowed.map(d => `<option value="${d}">${d}</option>`).join('');
+            select.innerHTML = optionsHtml;
+
+            if (allowed.includes(currentValue)) {
+                select.value = currentValue;
+            } else {
+                select.value = '';
+                const otherInput = document.getElementById('otherDesignationInput');
+                otherInput.classList.add('hidden-element');
+                otherInput.required = false;
+                otherInput.value = '';
+            }
+        }
+
         function handleDesignationChange() {
             const select = document.getElementById('designationSelect');
             const otherInput = document.getElementById('otherDesignationInput');
@@ -124,7 +217,11 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         function handleCourseSelectionChange() {
             const courseId = Number(document.getElementById('courseSelect').value);
             const container = document.getElementById('dynamicUploadsContainer');
-            
+
+            toggleFormVisibility(!!courseId);
+            updateDesignationOptionsForCourse(courseId);
+            updateGenderOptionsForCourse(courseId);
+            updateInstitutionTypeOptionsForCourse(courseId);
             renderInstitutionFields();
             
             if (!courseId) {
