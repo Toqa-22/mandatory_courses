@@ -523,7 +523,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
                         file_labels.push(labelVal);
                         file_examples.push(exampleElements[index] ? exampleElements[index].value.trim() : '');
                     }
-                });a
+                });
                 required_files = file_labels.length;
             }
 
@@ -564,7 +564,14 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             const checkboxes = document.querySelectorAll('.inst-checkbox-target');
             
             checkboxes.forEach(chk => {
-                if (chk.checked) {
+                const item = chk.closest('.allocation-item');
+                const isHiddenByFilter = item && item.classList.contains('hidden-element');
+
+                // An institution only gets saved if it's both checked AND currently
+                // visible under the chosen Restrictions Options filter. This is what
+                // makes "Ibra Only" / "Other Only" actually exclude the other side,
+                // instead of just hiding it from view while still saving it.
+                if (chk.checked && !isHiddenByFilter) {
                     const instId = Number(chk.getAttribute('data-id'));
                     const currentCount = parseInt(chk.getAttribute('data-current-count'), 10) || 0;
                     const slotsInput = document.querySelector(`.inst-slots-target[data-id="${instId}"]`);
