@@ -24,17 +24,24 @@
         <div class="form-card">
             <h2>Registration Form</h2>
             <div class="form-grid">
-                <input type="text" id="staffName" placeholder="Your Full Name" required>
-                <input type="text" id="staffNumber" placeholder="Staff Number" required>
-                <input type="tel" id="phoneNumber" placeholder="Phone Number" required>
+                <div class="form-group-full">
+                    <label for="courseSelect">Choose Target Session Course</label>
+                    <select id="courseSelect" required>
+                        <option value="">-- Choose Course --</option>
+                    </select>
+                </div>
+
+                <input type="text" id="staffName" class="hidden-element" placeholder="Your Full Name" required>
+                <input type="text" id="staffNumber" class="hidden-element" placeholder="Staff Number" required>
+                <input type="tel" id="phoneNumber" class="hidden-element" placeholder="Phone Number" required>
                 
-                <select id="sexSelect" required>
+                <select id="sexSelect" class="hidden-element" required>
                     <option value="">-- Gender --</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                 </select>
                 
-                <div>
+                <div id="designationFieldWrapper" class="hidden-element">
                     <select id="designationSelect" required>
                         <option value="">-- Designation --</option>
                         <option value="Nurse">Nurse</option>
@@ -45,14 +52,14 @@
                     <input type="text" id="otherDesignationInput" placeholder="Specify Designation" class="hidden-element" style="margin-top: 10px;">
                 </div>
 
-                <input type="text" id="specializationInput" placeholder="current post" required>
+                <input type="text" id="specializationInput" class="hidden-element" placeholder="current post" required>
 
-                <div class="form-group-full">
+                <div class="form-group-full hidden-element" id="institutionFieldWrapper">
                     <label for="institutionTypeSelect">Institution</label>
                     <select id="institutionTypeSelect" required>
                         <option value="">-- Choose Institution Option --</option>
-                        <option value="Ibra">Ibra</option>
-                        <option value="Other">Other</option>
+                        <option value="Ibra">Ibra hospital</option>
+                        <option value="Other">Other hospital and health center</option>
                     </select>
                 </div>
 
@@ -87,17 +94,10 @@
                     </select>
                 </div>
                 
-                <div class="form-group-full">
-                    <label for="courseSelect">Choose Target Session Course</label>
-                    <select id="courseSelect" required>
-                        <option value="">-- Choose Course --</option>
-                    </select>
-                </div>
-                
                 <div class="dynamic-uploads-wrapper" id="dynamicUploadsContainer"></div>
             </div>
             
-            <div class="btn-row">
+            <div class="btn-row hidden-element" id="submitRowContainer">
                 <button class="btn-register" id="regBtn">Register Now</button>
             </div>
         </div>
