@@ -115,36 +115,6 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
             ibraContainer.innerHTML = ibraHtml.join('') || '<div style="color:#64748b; font-size:12px; padding:5px;">No records</div>';
             otherContainer.innerHTML = otherHtml.join('') || '<div style="color:#64748b; font-size:12px; padding:5px;">No records</div>';
-            
-            applyAllocationFilter();
-        }
-
-        function applyAllocationFilter() {
-            const filterVal = document.getElementById('allocationFilterSelect').value;
-            const items = document.querySelectorAll('.allocation-item');
-            
-            items.forEach(item => {
-                const cat = item.getAttribute('data-category');
-                if (filterVal === 'ALL' || filterVal === cat) {
-                    item.classList.remove('hidden-element');
-                } else {
-                    item.classList.add('hidden-element');
-                }
-            });
-
-            const visibleIbra = document.querySelectorAll('#allocationWrapperIbra .allocation-item:not(.hidden-element)');
-            if (visibleIbra.length === 0) {
-                document.getElementById('ibraSectionBox').classList.add('hidden-element');
-            } else {
-                document.getElementById('ibraSectionBox').classList.remove('hidden-element');
-            }
-
-            const visibleOther = document.querySelectorAll('#allocationWrapperOther .allocation-item:not(.hidden-element)');
-            if (visibleOther.length === 0) {
-                document.getElementById('otherSectionBox').classList.add('hidden-element');
-            } else {
-                document.getElementById('otherSectionBox').classList.remove('hidden-element');
-            }
         }
 
         function handleBulkSelectionToggle() {
@@ -468,7 +438,6 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             document.getElementById('courseConfigForm').reset();
             document.getElementById('fileArrayWrapper').innerHTML = '';
             document.getElementById('bulkSeatsCountInput').value = '';
-            document.getElementById('allocationFilterSelect').value = 'ALL';
             document.getElementById('customDesignationsBox').classList.add('hidden-element');
             document.getElementById('documentRulesConfigContainer').classList.add('hidden-element');
             document.getElementById('documentRequirementSelect').value = 'No';
@@ -564,14 +533,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             const checkboxes = document.querySelectorAll('.inst-checkbox-target');
             
             checkboxes.forEach(chk => {
-                const item = chk.closest('.allocation-item');
-                const isHiddenByFilter = item && item.classList.contains('hidden-element');
-
-                // An institution only gets saved if it's both checked AND currently
-                // visible under the chosen Restrictions Options filter. This is what
-                // makes "Ibra Only" / "Other Only" actually exclude the other side,
-                // instead of just hiding it from view while still saving it.
-                if (chk.checked && !isHiddenByFilter) {
+                if (chk.checked) {
                     const instId = Number(chk.getAttribute('data-id'));
                     const currentCount = parseInt(chk.getAttribute('data-current-count'), 10) || 0;
                     const slotsInput = document.querySelector(`.inst-slots-target[data-id="${instId}"]`);
@@ -595,7 +557,6 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         document.getElementById('cancelEditBtn').addEventListener('click', exitEditOperationalMode);
         document.getElementById('courseConfigForm').addEventListener('submit', handleFormSubmission);
         
-        document.getElementById('allocationFilterSelect').addEventListener('change', applyAllocationFilter);
         document.getElementById('allocationBulkSelectAction').addEventListener('change', handleBulkSelectionToggle);
         document.getElementById('applyBulkSeatsBtn').addEventListener('click', handleBulkSeatsOverride);
 
