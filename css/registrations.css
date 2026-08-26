@@ -1,0 +1,28 @@
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #f4f7fc; min-height: 100vh; padding: 40px 20px; }
+        .container { max-width: 1400px; margin: auto; }
+        .title { text-align: center; font-size: 50px; color: #0f172a; margin-bottom: 15px; }
+        .subtitle { text-align: center; color: #64748b; margin-bottom: 40px; }
+        .nav-buttons { display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; }
+        .btn-nav { padding: 12px 24px; background: white; border: 2px solid #2563eb; color: #2563eb; font-size: 15px; border-radius: 12px; cursor: pointer; text-decoration: none; font-weight: bold; }
+        .btn-nav:hover { background: #eff6ff; }
+        .stats { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; margin-bottom: 40px; }
+        .stat-card { width: 200px; background: white; border-radius: 25px; padding: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, .08); }
+        .stat-label { font-size: 16px; color: #2563eb; margin-bottom: 12px; font-weight: bold; }
+        .stat-number { font-size: 45px; font-weight: bold; color: #0f172a; }
+        .table-card { background: white; padding: 40px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, .08); overflow-x: auto; }
+        .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        thead tr { background: linear-gradient(90deg, #2563eb, #7c3aed); color: white; }
+        thead th { padding: 15px; text-align: left; }
+        tbody tr { border-bottom: 1px solid #f1f5f9; }
+        tbody tr:hover { background: #f8faff; }
+        tbody td { padding: 15px; color: #0f172a; vertical-align: middle; }
+        .course-badge { background: #eff6ff; color: #2563eb; padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        .inst-badge { background: #f0fdf4; color: #16a34a; padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        .gender-badge { background: #f5f3ff; color: #7c3aed; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .files-container { display: flex; flex-direction: column; gap: 5px; min-width: 180px; }
+        .btn-view-file { display: block; text-align: left; background: #f1f5f9; color: #4f46e5; padding: 6px 10px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 12px; border: 1px solid #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .btn-view-file:hover { background: #4f46e5; color: white; }
+        .btn-delete { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .export-btn { padding: 12px 28px; background: linear-gradient(90deg, #2563eb, #7c3aed); border: none; color: white; font-size: 15px; border-radius: 12px; cursor: pointer; }

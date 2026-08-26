@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course Management System Dashboard</title>
+<!-- Must run before the page renders: bounces back to login if not authenticated -->
+<script src="../js/auth-guard.js"></script>
+<link rel="stylesheet" href="../css/admin.css">
+<link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+<div class="container">
+        <h1 class="title">Course Management System Dashboard</h1>
+        <p class="subtitle">Update configuration frameworks, structure labels, check seat arrays, and setup parameters.</p>
+
+        <div class="nav-buttons">
+            <a class="btn-nav" href="registrations.html">
+                📋 Registration Table
+            </a>
+            <a class="btn-nav" href="#" onclick="logoutAdmin(); return false;" style="background:linear-gradient(135deg,#64748b,#334155);">
+                🚪 Logout
+            </a>
+        </div>
+        
+        <div class="grid-panel">
+            <div class="card-box">
+                <h2 id="formPanelTitle">Create New Managed Course</h2>
+                <button id="cancelEditBtn" class="btn-cancel style-chosen hidden-element">Cancel Edit Operational Mode</button>
+                <form id="courseConfigForm">
+         
+                    <div class="input-row">
+                        <input type="text" id="courseName" placeholder="Course Name (e.g. BLS)" required>
+                        <input type="date" id="courseDate" required>
+                    </div>
+          
+                    <div class="input-row">
+                        <input type="number" id="courseSeats" placeholder="Chairs Limit (e.g. 5)" min="0" required>
+                        <select id="courseGender" required>
+                            <option value="Both">Target Gender: Both</option>
+                            <option value="Male">Male Only</option>
+                            <option value="Female">Female Only</option>
+                        </select>
+                    </div>
+
+                    <div class="array-group-box">
+                        <h4 style="margin-bottom: 5px; color:#334155;">Target Designations</h4>
+                        <select id="designationModeSelect" style="margin-bottom: 10px;" required>
+                            <option value="All">All Designations Allowed</option>
+                            <option value="Custom">Choose Specific Designations...</option>
+                        </select>
+                        <div id="customDesignationsBox" class="hidden-element" style="background: white; border: 1px solid #d1d5db; border-radius: 12px; padding: 15px;">
+                            <p style="font-size: 13px; color: #64748b; margin-bottom: 10px;">Target designation:</p>
+                            <div class="designation-grid">
+                                <label class="designation-item"><input type="checkbox" class="desig-checkbox" value="Nurse"> Nurse</label>
+                                <label class="designation-item"><input type="checkbox" class="desig-checkbox" value="Physician"> Physician</label>
+                                <label class="designation-item"><input type="checkbox" class="desig-checkbox" value="Technician"> Technician</label>
+                                <label class="designation-item"><input type="checkbox" class="desig-checkbox" value="Other"> Other</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="array-group-box">
+                        <h4 style="margin-bottom: 5px; color:#334155;">Attatchment file</h4>
+                        <select id="documentRequirementSelect" style="margin-bottom: 10px;" required>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                        
+                        <div id="documentRulesConfigContainer" class="hidden-element">
+                            <div id="fileArrayWrapper"></div>
+                            <button type="button" class="btn-action btn-add" id="addFileRuleRowBtn" style="margin-top: 5px;">+ Append Dynamic Document Target Row</button>
+                        </div>
+                    </div>
+
+                    <div class="array-group-box">
+                        <h4 style="margin-bottom: 10px; color:#334155;">Institutional Allocations / Chair Mapping</h4>
+                        
+                        <div class="allocation-controls">
+                            <select id="allocationFilterSelect" style="padding: 10px; font-size: 13px;">
+                                <option>...Institutions Restrictions Options...</option>
+                                <option value="ALL">ALL Institutions Restrictions</option>
+                                <option value="IBRA">Ibra Hospital Institutions Restrictions Only</option>
+                                <option value="OTHER">Other Institutions Restrictions Only</option>
+                            </select>
+                            <select id="allocationBulkSelectAction" style="padding: 10px; font-size: 13px;">
+                                <option value="">-- Bulk Select Toggles --</option>
+                                <option value="ALL">Select All Visible</option>
+                                <option value="IBRA_ALL">Select All Ibra</option>
+                                <option value="OTHER_ALL">Select All Other</option>
+                                <option value="NONE">Deselect All Visible</option>
+                            </select>
+                        </div>
+
+                        <div class="allocation-bulk-row">
+                            <input type="number" id="bulkSeatsCountInput" placeholder="Bulk Chairs Value (e.g. 3)" min="0" style="padding: 10px; font-size: 13px;">
+                            <select id="bulkSeatsTargetFilter" style="padding: 10px; font-size: 13px; max-width: 180px;">
+                                <option value="VISIBLE">Apply to Visible & Checked</option>
+                                <option value="IBRA">Apply to Ibra Only</option>
+                                <option value="OTHER">Apply to Other Only</option>
+                            </select>
+                            <button type="button" class="btn-action btn-add" id="applyBulkSeatsBtn">Apply Bulk Seats</button>
+                        </div>
+
+                        <!-- Split Containers into Ibra and Other -->
+                        <div id="ibraSectionBox" style="margin-bottom: 15px;">
+                            <h5 style="font-size: 13px; color: #475569; margin-bottom: 6px; font-weight: bold;">Ibra Settings</h5>
+                            <div class="allocation-container" id="allocationWrapperIbra"></div>
+                        </div>
+
+                        <div id="otherSectionBox">
+                            <h5 style="font-size: 13px; color: #475569; margin-bottom: 6px; font-weight: bold;">Other Settings</h5>
+                            <div class="allocation-container" id="allocationWrapperOther"></div>
+                        </div>
+                    </div>
+
+                    <!-- Primary Actions Row -->
+                    <div class="button-group">
+                        <button type="submit" class="btn-flex btn-primary-action" id="submitFormBtn">Save</button>
+                        <button type="button" class="btn-flex btn-secondary" onclick="clearForm()">Clear Form</button>
+                    </div>
+
+                    <!-- Template Presets Row Under Save/Clear Buttons -->
+                    <div class="button-group">
+                        <button type="button" class="btn-flex btn-preset" id="loadBlsPresetBtn">Load BLS Info Template</button>
+                        <button type="button" class="btn-flex btn-preset" id="loadAclsPresetBtn">Load ACLS Info Template</button>
+                    </div>
+                    
+                </form>
+            </div>
+        </div>
+
+        <div class="list-table-container">
+            <h2>Active Monitored Courses Array</h2>
+            <div style="overflow-x: auto; margin-top: 20px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Course Name</th>
+                            <th>Target Date</th>
+                            <th>Chairs Available</th>
+                            <th>Target Criteria</th>
+                            <th>Dynamic Files Mapping Requirements</th>
+                            <th>Operations Control</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coursesMainTableBody">
+                        <tr>
+                            <td colspan="6" style="color: #64748b; text-align: center;">Refreshing active configuration modules...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<script type="module" src="../js/admin.js"></script>
+</body>
+</html>

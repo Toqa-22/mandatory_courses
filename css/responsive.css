@@ -1,0 +1,23 @@
+/* Additive-only responsive tweaks — desktop layout is untouched */
+.nav-buttons { flex-wrap: wrap; row-gap: 12px; }
+
+@media (max-width: 640px) {
+    body { padding: 20px 12px; }
+    .title { font-size: 30px; }
+    .subtitle { font-size: 13px; padding: 0 8px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .input-row { grid-template-columns: 1fr; }
+    .button-group { flex-direction: column; }
+    .allocation-controls, .allocation-bulk-row { flex-direction: column; }
+    .allocation-item-label-group { width: 60%; font-size: 12px; }
+    .table-header-row { flex-direction: column; gap: 14px; align-items: stretch; }
+    .export-btn { width: 100%; }
+    .card-box, .list-table-container, .table-card { padding: 22px; }
+    .form-card { padding: 24px; }
+    .btn-nav { padding: 12px 18px !important; font-size: 14px !important; }
+}
+@media (max-width: 400px) {
+    .title { font-size: 24px; }
+    .course-card { width: 100%; }
+    .seat-number { font-size: 42px; }
+}

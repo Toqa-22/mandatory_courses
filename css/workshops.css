@@ -1,0 +1,37 @@
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #f4f7fc; min-height: 100vh; padding: 40px 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        .title { text-align: center; font-size: 50px; color: #0f172a; margin-bottom: 15px; }
+        .subtitle { text-align: center; color: #64748b; margin-bottom: 40px; }
+        .top-cards { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; margin-bottom: 40px; }
+        #courseCards { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; }
+        .course-card { width: 220px; background: white; border-radius: 25px; padding: 35px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, .08); }
+        .course-name { font-size: 30px; color: #2563eb; margin-bottom: 10px; }
+        .course-date-display { font-size: 14px; color: #7c3aed; margin-bottom: 15px; font-weight: bold; }
+        .seat-number { font-size: 55px; font-weight: bold; color: #0f172a; }
+        .seat-text { color: #64748b; font-size: 18px; }
+        .form-card { background: white; padding: 40px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, .08); }
+        .form-card h2 { margin-bottom: 30px; color: #0f172a; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        input, select { width: 100%; padding: 16px; border: 1px solid #d1d5db; border-radius: 15px; font-size: 16px; background-color: white; }
+        input:focus, select:focus { outline: none; border-color: #2563eb; }
+        .form-group-full { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; }
+        .form-group-full label { font-size: 14px; font-weight: bold; color: #334155; }
+        
+        .dynamic-uploads-wrapper { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
+        .single-upload-box { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 20px; border-radius: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .single-upload-box label { font-size: 15px; color: #0f172a; font-weight: bold; }
+        .single-upload-box label span { color: #dc2626; }
+        .file-input { padding: 10px; background: white; border: 1px solid #cbd5e1; cursor: pointer; width: 100%; border-radius: 10px; }
+        
+        .form-blueprint-card { display: flex; gap: 15px; background: #f1f5f9; padding: 12px; border-radius: 10px; align-items: center; margin-top: 4px; border: 1px solid #e2e8f0; }
+        .form-blueprint-card img { width: 85px; height: 85px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; background: white; }
+        .form-blueprint-card div { font-size: 12px; color: #64748b; line-height: 1.4; }
+        .form-blueprint-card div b { color: #334155; display: block; margin-bottom: 2px; }
+
+        .btn-row { display: flex; margin-top: 30px; }
+        .btn-register { flex: 1; padding: 18px; background: linear-gradient(90deg, #2563eb, #7c3aed); border: none; color: white; font-size: 18px; border-radius: 15px; cursor: pointer; font-weight: bold; }
+        .btn-register:disabled { background: #cbd5e1; cursor: not-allowed; }
+        
+        .hidden-element { display: none !important; }
+        .no-uploads-msg { background: #f0fdf4; border: 1px dashed #bbf7d0; color: #166534; padding: 20px; border-radius: 15px; font-weight: bold; text-align: center; }

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registrations Dashboard</title>
+<!-- Must run before the page renders: bounces back to login if not authenticated -->
+<script src="../js/auth-guard.js"></script>
+<link rel="stylesheet" href="../css/registrations.css">
+<link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+
+<div class="container">
+        <h1 class="title">Registrations Dashboard</h1>
+        <p class="subtitle">Review live tracking records, inspect custom descriptions paperwork, or purge files logs entries.</p>
+
+        <div class="nav-buttons">
+            <a class="btn-nav" href="dashboard.html">← Back to Course Settings</a>
+            <a class="btn-nav" href="#" onclick="logoutAdmin(); return false;">🚪 Logout</a>
+        </div>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="table-card">
+            <div class="table-header-row">
+                <h2>Registration Records</h2>
+                <button class="export-btn" onclick="exportCSV()">Export Data (CSV)</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Phone Number</th>
+                        <th>Staff Name</th>
+                        <th>Staff Number</th>
+                        <th>Gender</th>
+                        <th>Institution Origin</th>
+                        <th>Course Target</th>
+                        <th>Course Date</th>
+                        <th>Uploaded Attachments</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+<script type="module" src="../js/registrations.js"></script>
+</body>
+</html>

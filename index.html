@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workshops</title>
+<link rel="stylesheet" href="css/workshops.css">
+<link rel="stylesheet" href="css/login.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<div class="container">
+        <h1 class="title">Workshops Registration</h1>
+        <p class="subtitle">Please input details and complete the authorized departmental parameters.</p>
+
+        <div class="top-cards">
+            <div id="courseCards"></div>
+        </div>
+
+        <div class="form-card">
+            <h2>Registration Form</h2>
+            <div class="form-grid">
+                <input type="text" id="staffName" placeholder="Your Full Name" required>
+                <input type="text" id="staffNumber" placeholder="Staff Number" required>
+                <input type="tel" id="phoneNumber" placeholder="Phone Number" required>
+                
+                <select id="sexSelect" required>
+                    <option value="">-- Gender --</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+                
+                <div>
+                    <select id="designationSelect" required>
+                        <option value="">-- Designation --</option>
+                        <option value="Nurse">Nurse</option>
+                        <option value="Physician">Physician</option>
+                        <option value="Technician">Technician</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <input type="text" id="otherDesignationInput" placeholder="Specify Designation" class="hidden-element" style="margin-top: 10px;">
+                </div>
+
+                <input type="text" id="specializationInput" placeholder="current post" required>
+
+                <div class="form-group-full">
+                    <label for="institutionTypeSelect">Institution</label>
+                    <select id="institutionTypeSelect" required>
+                        <option value="">-- Choose Institution Option --</option>
+                        <option value="Ibra">Ibra</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group-full hidden-element" id="departmentContainer">
+                    <label for="departmentSelect">Select Department (Max chairs per department is linked to config validation)</label>
+                    <select id="departmentSelect">
+                        <option value="">-- Choose Department --</option>
+                    </select>
+                </div>
+
+                <div class="form-group-full hidden-element" id="otherInstitutionContainer">
+                    <label for="otherInstitutionInput">Specify Institution Name</label>
+                    <select id="otherInstitutionInput">
+                        <option value="">-- Choose Corporate / Academic Entity --</option>
+                        <option value="Al Mudhaibi Health Center">Al Mudhaibi Health Center</option>
+                        <option value="Wadi Bani Khalid Hospital">Wadi Bani Khalid Hospital</option>
+                        <option value="Sinaw Health Hospital">Sinaw Health Hospital</option>
+                        <option value="Ibra Health Center">Ibra Health Center</option>
+                        <option value="Sinaw Health Center">Sinaw Health Center</option>
+                        <option value="Al Yahmadi Health Center">Al Yahmadi Health Center</option>
+                        <option value="Al Mudhaibi Health Center (New)">Al Mudhaibi Health Center (New)</option>
+                        <option value="Samad Al Shaan Hospital">Samad Al Shaan Hospital</option>
+                        <option value="Bidiyah Hospital">Bidiyah Hospital</option>
+                        <option value="Al Qabil Health Center">Al Qabil Health Center</option>
+                        <option value="Wadi Dama Wa At Taiyyin Hospital">Wadi Dama Wa At Taiyyin Hospital</option>
+                        <option value="Al Dhahir Health Center">Al Dhahir Health Center</option>
+                        <option value="Al Jaza Health Center">Al Jaza Health Center</option>
+                        <option value="Sumayyan Health Center">Sumayyan Health Center</option>
+                        <option value="Al Jardaa Health Center">Al Jardaa Health Center</option>
+                        <option value="Al Aflaj Health Center">Al Aflaj Health Center</option>
+                        <option value="Miss Health Centre">Miss Health Centre</option>
+                    </select>
+                </div>
+                
+                <div class="form-group-full">
+                    <label for="courseSelect">Choose Target Session Course</label>
+                    <select id="courseSelect" required>
+                        <option value="">-- Choose Course --</option>
+                    </select>
+                </div>
+                
+                <div class="dynamic-uploads-wrapper" id="dynamicUploadsContainer"></div>
+            </div>
+            
+            <div class="btn-row">
+                <button class="btn-register" id="regBtn">Register Now</button>
+            </div>
+        </div>
+    </div>
+
+<!-- Small admin-access trigger (bottom-right corner) -->
+<button id="adminTriggerBtn" title="Staff Admin Login" onclick="openAdminLogin()">🔒</button>
+
+<div id="loginOverlay">
+    <div id="loginBox">
+        <h3>Admin Access</h3>
+        <p class="sub">Enter staff credentials to continue.</p>
+        <p id="loginError">Incorrect username or password.</p>
+        <input type="text" id="loginUsername" placeholder="Username" autocomplete="username">
+        <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+        <div class="login-actions">
+            <button id="loginCancelBtn" type="button" onclick="closeAdminLogin()">Cancel</button>
+            <button id="loginSubmitBtn" type="button" onclick="attemptAdminLogin()">Enter</button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="js/login.js"></script>
+<script type="module" src="js/workshops.js"></script>
+</body>
+</html>
