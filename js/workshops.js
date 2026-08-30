@@ -21,6 +21,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         ];
 
         const DESIGNATION_OPTIONS = ["Nurse", "Physician", "Technician", "Other"];
+        const OTHER_CATCHALL_NAME = "Other (Please Specify)";
 
         // Fields that only appear once a course has been chosen
         const REST_OF_FORM_IDS = [
@@ -137,17 +138,38 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
                 deptContainer.classList.remove('hidden-element');
                 otherContainer.classList.add('hidden-element');
                 document.getElementById('otherInstitutionInput').value = '';
+                resetOtherFreeText();
                 filterIbraDepartments(courseId);
             } else if (selectedType === 'Other') {
                 otherContainer.classList.remove('hidden-element');
                 deptContainer.classList.add('hidden-element');
                 document.getElementById('departmentSelect').value = '';
                 filterOtherInstitutions(courseId);
+                handleOtherInstitutionChange();
             } else {
                 deptContainer.classList.add('hidden-element');
                 otherContainer.classList.add('hidden-element');
                 document.getElementById('departmentSelect').value = '';
                 document.getElementById('otherInstitutionInput').value = '';
+                resetOtherFreeText();
+            }
+        }
+
+        function resetOtherFreeText() {
+            const freeText = document.getElementById('otherInstitutionFreeText');
+            freeText.value = '';
+            freeText.required = false;
+            freeText.classList.add('hidden-element');
+        }
+
+        function handleOtherInstitutionChange() {
+            const otherDropdown = document.getElementById('otherInstitutionInput');
+            const freeText = document.getElementById('otherInstitutionFreeText');
+            if (otherDropdown.value === OTHER_CATCHALL_NAME) {
+                freeText.classList.remove('hidden-element');
+                freeText.required = true;
+            } else {
+                resetOtherFreeText();
             }
         }
 
@@ -199,7 +221,9 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
                     const allocationConfig = courseInstitutionsMapCached.find(m => m.course_id === courseId && m.institutions?.name === opt.value);
                     
                     if (allocationConfig) {
-                        const countFilled = registrationLogsCached.filter(r => r.course_id === courseId && r.institution_name_snapshot === opt.value).length;
+                        const countFilled = opt.value === OTHER_CATCHALL_NAME
+                            ? registrationLogsCached.filter(r => r.course_id === courseId && r.institution_name_snapshot && r.institution_name_snapshot.startsWith(OTHER_CATCHALL_NAME)).length
+                            : registrationLogsCached.filter(r => r.course_id === courseId && r.institution_name_snapshot === opt.value).length;
                         const chairsLeft = Math.max(0, allocationConfig.max_slots - countFilled);
                         opt.text = `${opt.value} (${chairsLeft} chairs remaining)`;
                         if (chairsLeft <= 0) isClosed = true;
@@ -367,6 +391,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             
             const selectedDept = document.getElementById('departmentSelect').value;
             const otherText    = document.getElementById('otherInstitutionInput').value;
+            const otherFreeText = document.getElementById('otherInstitutionFreeText').value.trim();
             const fileInputs   = document.querySelectorAll('.custom-file-target');
 
             if (!phoneNumber || !sexValue || !staffName || !staffNumber || !designation || !specialization || !courseId || !instType) {
@@ -375,12 +400,23 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             }
 
             let institutionSnapshotString = '';
+            let allocationLookupName = '';
+            const isOtherCatchAll = (instType === 'Other' && otherText === OTHER_CATCHALL_NAME);
+
             if (instType === 'Ibra') {
                 if (!selectedDept) { alert("Please select your target department."); return; }
                 institutionSnapshotString = `Ibra - ${selectedDept}`;
+                allocationLookupName = institutionSnapshotString;
             } else {
                 if (!otherText) { alert("Please select your institution name."); return; }
-                institutionSnapshotString = otherText;
+                if (isOtherCatchAll) {
+                    if (!otherFreeText) { alert("Please type your institution name."); return; }
+                    institutionSnapshotString = `${OTHER_CATCHALL_NAME}: ${otherFreeText}`;
+                    allocationLookupName = OTHER_CATCHALL_NAME;
+                } else {
+                    institutionSnapshotString = otherText;
+                    allocationLookupName = otherText;
+                }
             }
 
             const currentCourse = coursesCached.find(c => c.id === courseId);
@@ -395,15 +431,18 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             regBtn.innerText = "Processing server storage sequence uploads...";
 
             try {
-                const allocationConfig = courseInstitutionsMapCached.find(m => m.course_id === courseId && m.institutions?.name === institutionSnapshotString);
+                const allocationConfig = courseInstitutionsMapCached.find(m => m.course_id === courseId && m.institutions?.name === allocationLookupName);
                 if (!allocationConfig) {
                     throw new Error("This institution/department is not authorized or assigned slots for this specific course framework.");
                 }
 
-                const { data: realTimeCheck } = await client.from('registrations')
+                let realTimeQuery = client.from('registrations')
                     .select('id')
-                    .eq('course_id', courseId)
-                    .eq('institution_name_snapshot', institutionSnapshotString);
+                    .eq('course_id', courseId);
+                realTimeQuery = isOtherCatchAll
+                    ? realTimeQuery.like('institution_name_snapshot', `${OTHER_CATCHALL_NAME}%`)
+                    : realTimeQuery.eq('institution_name_snapshot', institutionSnapshotString);
+                const { data: realTimeCheck } = await realTimeQuery;
                 
                 if (realTimeCheck && realTimeCheck.length >= allocationConfig.max_slots) {
                     throw new Error(`This department/institution seat room has filled its cap limit of ${allocationConfig.max_slots} seats. Registration locked.`);
@@ -465,6 +504,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
                 document.getElementById('institutionTypeSelect').value = '';
                 document.getElementById('departmentSelect').value = '';
                 document.getElementById('otherInstitutionInput').value = '';
+                resetOtherFreeText();
                 document.getElementById('courseSelect').value = '';
                 
                 await loadRegistrationFormConfig();
@@ -478,6 +518,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
         }
 
         document.getElementById('institutionTypeSelect').addEventListener('change', renderInstitutionFields);
+        document.getElementById('otherInstitutionInput').addEventListener('change', handleOtherInstitutionChange);
         document.getElementById('courseSelect').addEventListener('change', handleCourseSelectionChange);
         
         document.getElementById('sexSelect').addEventListener('change', updateSelectableCoursesOptions);
