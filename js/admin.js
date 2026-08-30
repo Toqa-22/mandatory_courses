@@ -72,14 +72,15 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
         async function seedAndFetchMasterInstitutions() {
             const { data: existing } = await client.from('institutions').select('*');
-            if (!existing || existing.length === 0) {
-                const insertPayload = masterInstitutionsAndDepartments.map(name => ({ name }));
-                await client.from('institutions').insert(insertPayload);
-                const { data: updated } = await client.from('institutions').select('*');
-                globalInstitutionsList = updated || [];
-            } else {
-                globalInstitutionsList = existing;
+            const existingNames = new Set((existing || []).map(i => i.name));
+            const missing = masterInstitutionsAndDepartments.filter(name => !existingNames.has(name));
+
+            if (missing.length > 0) {
+                await client.from('institutions').insert(missing.map(name => ({ name })));
             }
+
+            const { data: updated } = await client.from('institutions').select('*');
+            globalInstitutionsList = updated || existing || [];
         }
 
         function renderAllocationMappingFramework(currentMap = []) {
