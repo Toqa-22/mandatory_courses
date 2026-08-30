@@ -14,7 +14,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             "Al Mudhaibi Health Center (New)", "Samad Al Shaan Hospital", "Bidiyah Hospital",
             "Al Qabil Health Center", "Wadi Dama Wa At Taiyyin Hospital", "Al Dhahir Health Center",
             "Al Jaza Health Center", "Sumayyan Health Center", "Al Jardaa Health Center",
-            "Al Aflaj Health Center", "Miss Health Centre", "Dma Health Centre"
+            "Al Aflaj Health Center", "Miss Health Centre", "Dma Health Centre",
             "Ibra - Emergency Department Doctor", "Ibra - Emergency Department Nurse", "Ibra - Internal Medicine Department", 
             "Ibra - General Surgery Department", "Ibra - Paediatrician", "Ibra - Obstetrics and Gynecology Department", 
             "Ibra - Orthopedics Department", "Ibra - Ophthalmology Department", "Ibra - ENT Department", 
