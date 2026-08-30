@@ -102,7 +102,10 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
                 r.course_date
             ]);
             const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            // Excel doesn't assume UTF-8 for plain CSV files — without this BOM it
+            // guesses the system's default codepage and garbles Arabic text.
+            const csvWithBom = '\uFEFF' + csv;
+            const blob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = 'registrations_report.csv';
