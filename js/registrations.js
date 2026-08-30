@@ -1,4 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import * as XLSX from 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm';
         const client = createClient(
             "https://pqgkdnxdsybcfamwadrf.supabase.co",
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZ2tkbnhkc3liY2ZhbXdhZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MzE0NjUsImV4cCI6MjA5NzEwNzQ2NX0.lugWuqNI5VMy6hCn-y38-hi825pIHcUjOCAWCsMJz4c"
@@ -88,28 +89,59 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             }
         };
 
+        function formatDateDDMMYYYY(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return String(dateStr); // fallback if it's not a parseable date
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}-${month}-${year}`;
+        }
+
         window.exportCSV = function () {
             if (allData.length === 0) return alert("No records found.");
             const headers = ['#', 'Phone Number', 'Staff Name', 'Staff Number', 'Gender', 'Institution Origin', 'Course Name', 'Course Date'];
             const rows = allData.map((r, i) => [
                 i + 1,
-                `"\t${r.phone_number || ''}"`,
-                `"${r.staff_name}"`,
-                `"${r.staff_number}"`,
-                `"${r.sex_snapshot || r.sex || 'N/A'}"`,
-                `"${r.institution_name_snapshot}"`,
-                `"${r.course_name}"`,
-                r.course_date
+                r.phone_number || '',
+                r.staff_name || '',
+                r.staff_number || '',
+                r.sex_snapshot || r.sex || 'N/A',
+                r.institution_name_snapshot || '',
+                r.course_name || '',
+                formatDateDDMMYYYY(r.course_date)
             ]);
-            const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-            // Excel doesn't assume UTF-8 for plain CSV files — without this BOM it
-            // guesses the system's default codepage and garbles Arabic text.
-            const csvWithBom = '\uFEFF' + csv;
-            const blob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'registrations_report.csv';
-            link.click();
+
+            const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+            // Give every column enough room to actually read the text (Arabic names,
+            // long institution/course names, etc.) instead of Excel's cramped default.
+            worksheet['!cols'] = [
+                { wch: 5 },   // #
+                { wch: 16 },  // Phone Number
+                { wch: 26 },  // Staff Name
+                { wch: 14 },  // Staff Number
+                { wch: 10 },  // Gender
+                { wch: 32 },  // Institution Origin
+                { wch: 32 },  // Course Name
+                { wch: 14 }   // Course Date
+            ];
+
+            // Force Phone Number, Staff Number, and Course Date to stay as plain text,
+            // so Excel never reinterprets/reformats them (no leading-zero loss, no
+            // date-serial-number conversion).
+            const range = XLSX.utils.decode_range(worksheet['!ref']);
+            [1, 3, 7].forEach(colIndex => {
+                for (let row = range.s.r + 1; row <= range.e.r; row++) {
+                    const cellRef = XLSX.utils.encode_cell({ r: row, c: colIndex });
+                    if (worksheet[cellRef]) worksheet[cellRef].t = 's';
+                }
+            });
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Registrations');
+            XLSX.writeFile(workbook, 'registrations_report.xlsx');
         };
 
         loadData();
